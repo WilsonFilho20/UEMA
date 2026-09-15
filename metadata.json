@@ -1,0 +1,6 @@
+{
+  "name": "Teoria das Finanças Públicas - UEMA",
+  "description": "Plataforma acadêmica e interativa de Teoria das Finanças Públicas para o curso de Ciências Econômicas da UEMA: 12 aulas cronológicas, simuladores interativos, dashboard do professor e banco de 1.000 questões.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
