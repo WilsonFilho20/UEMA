@@ -21,6 +21,16 @@ export default function App() {
 
   const [tabAtiva, setTabAtiva] = useState<string>('aulas');
 
+  // Monitorar autenticação do Firebase e sincronizar estado
+  useEffect(() => {
+    const unsubscribe = authService.observarAutenticacao((usuario) => {
+      if (usuario) {
+        setUsuarioAtual(usuario);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   // When switching users, update tab to avoid invalid views
   useEffect(() => {
     if (usuarioAtual?.papel === 'aluno') {

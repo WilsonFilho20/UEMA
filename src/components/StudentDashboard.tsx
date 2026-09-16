@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { UsuarioAutenticado } from '../types';
 import {
   GraduationCap,
@@ -12,10 +12,14 @@ import {
   Play,
   Sparkles,
   ArrowRight,
-  ChevronRight
+  ChevronRight,
+  Flame,
+  CheckSquare,
+  History
 } from 'lucide-react';
 import { GOOGLE_DRIVE_REPO } from '../data/questionsData';
 import { UemaEconomiaLogo } from './UemaEconomiaLogo';
+import { firestoreDataService, RegistroSimuladoFirestore } from '../services/firestoreDataService';
 
 interface StudentDashboardProps {
   usuario: UsuarioAutenticado;
@@ -32,6 +36,60 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   onNavigateToSimulators,
   onNavigateToCalendar
 }) => {
+  const [simulados, setSimulados] = useState<RegistroSimuladoFirestore[]>([]);
+  const [carregando, setCarregando] = useState<boolean>(true);
+
+  // Carregar histórico real do discente no Firestore
+  useEffect(() => {
+    let ativo = true;
+    async function carregarHistorico() {
+      try {
+        const dados = await firestoreDataService.obterSimuladosDoAluno(usuario.uid);
+        if (ativo) {
+          setSimulados(dados);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar simulados do discente:', err);
+      } finally {
+        if (ativo) setCarregando(false);
+      }
+    }
+    carregarHistorico();
+    return () => {
+      ativo = false;
+    };
+  }, [usuario.uid]);
+
+  // Cálculos dinâmicos com base nos simulados reais feitos pelo aluno
+  const stats = useMemo(() => {
+    const total = simulados.length;
+    if (total === 0) {
+      return {
+        totalSimulados: 0,
+        questoesResolvidas: 0,
+        mediaNota: 0,
+        taxaAcertoGeral: 0,
+        ultimoSimulado: null,
+        temRegistros: false
+      };
+    }
+
+    const totalQuestoes = simulados.reduce((acc, s) => acc + s.total, 0);
+    const totalAcertos = simulados.reduce((acc, s) => acc + s.acertos, 0);
+    const somaNotas = simulados.reduce((acc, s) => acc + s.nota, 0);
+    const media = Number((somaNotas / total).toFixed(1));
+    const taxa = totalQuestoes > 0 ? Number(((totalAcertos / totalQuestoes) * 100).toFixed(1)) : 0;
+
+    return {
+      totalSimulados: total,
+      questoesResolvidas: totalQuestoes,
+      mediaNota: media,
+      taxaAcertoGeral: taxa,
+      ultimoSimulado: simulados[0],
+      temRegistros: true
+    };
+  }, [simulados]);
+
   return (
     <div className="space-y-6" id="painel-aluno">
       {/* Welcome Banner */}
@@ -49,7 +107,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             Olá, {usuario.nome}!
           </h2>
           <p className="text-sm text-slate-200 mt-1 max-w-2xl">
-            Bem-vindo ao seu ambiente personalizado de aprendizagem em Teoria das Finanças Públicas. Acompanhe seu progresso nas 12 aulas, treine com simuladores e resolva questões com cronômetro.
+            Bem-vindo ao seu ambiente personalizado de aprendizagem em Teoria das Finanças Públicas. Acompanhe seu progresso nas 12 aulas, treine com simuladores e resolva simulados com persistência em tempo real.
           </p>
         </div>
 
@@ -70,12 +128,171 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
           <button
             onClick={onNavigateToQuiz}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#ebc000] hover:bg-amber-400 text-[#002752] text-xs font-black shadow-sm transition-transform hover:scale-105"
+            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#ebc000] hover:bg-amber-400 text-[#002752] text-xs font-black shadow-sm transition-transform hover:scale-105 cursor-pointer"
           >
             <Play className="w-4 h-4 text-[#002752]" />
             Fazer Novo Simulado
           </button>
         </div>
+      </div>
+
+      {/* KPI Cards Reais do Aluno */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase">Simulados Realizados</span>
+            <div className="p-2 bg-blue-50 text-[#002752] rounded-lg">
+              <History className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-black text-[#002752]">{stats.totalSimulados}</span>
+            <span className="text-xs text-slate-500">testes salvos</span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            {stats.totalSimulados > 0 ? 'Conectado ao seu perfil institucional' : 'Nenhum simulado realizado ainda'}
+          </p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase">Média Geral de Notas</span>
+            <div className="p-2 bg-amber-50 text-amber-700 rounded-lg">
+              <Award className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-black text-amber-950">
+              {stats.temRegistros ? stats.mediaNota : '—'}
+            </span>
+            <span className="text-xs text-slate-500">/ 10,0</span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            {stats.mediaNota >= 7 ? 'Desempenho aprovatório' : stats.temRegistros ? 'Atenção para revisão teórica' : 'Comece resolvendo seu 1º simulado'}
+          </p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase">Taxa de Acertos</span>
+            <div className="p-2 bg-emerald-50 text-[#00733f] rounded-lg">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-black text-[#00733f]">
+              {stats.temRegistros ? `${stats.taxaAcertoGeral}%` : '—'}
+            </span>
+            <span className="text-xs text-slate-500">acertos</span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            {stats.questoesResolvidas} questões respondidas no total
+          </p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase">Status Pedagógico</span>
+            <div className="p-2 bg-purple-50 text-purple-700 rounded-lg">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-xl font-bold text-slate-800">
+              {!stats.temRegistros ? 'Iniciando' : stats.mediaNota >= 7 ? 'Regular / Estável' : 'Requer Atenção'}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Sincronizado com o Painel Docente
+          </p>
+        </div>
+      </div>
+
+      {/* Histórico dos Simulados do Aluno */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-base font-bold text-[#002752] flex items-center gap-2">
+              <History className="w-5 h-5 text-[#ebc000]" />
+              Histórico Pessoal de Simulados (Banco de Dados em Nuvem)
+            </h3>
+            <p className="text-xs text-slate-600">
+              Registros individuais salvos automaticamente a cada teste finalizado.
+            </p>
+          </div>
+
+          <button
+            onClick={onNavigateToQuiz}
+            className="px-3.5 py-1.5 bg-[#002752] hover:bg-[#001c3d] text-white rounded-lg text-xs font-semibold transition-colors"
+          >
+            Novo Treinamento
+          </button>
+        </div>
+
+        {carregando ? (
+          <div className="py-8 text-center text-xs text-slate-500">
+            Consultando registros no Firestore...
+          </div>
+        ) : simulados.length === 0 ? (
+          <div className="py-10 text-center space-y-3 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+            <GraduationCap className="w-10 h-10 text-slate-400 mx-auto" />
+            <div className="max-w-md mx-auto">
+              <h4 className="font-bold text-sm text-slate-800">Nenhum simulado registrado no seu perfil</h4>
+              <p className="text-xs text-slate-500 mt-1">
+                Seus resultados serão computados aqui e enviados ao professor para acompanhamento das dificuldades da turma.
+              </p>
+            </div>
+            <button
+              onClick={onNavigateToQuiz}
+              className="px-4 py-2 bg-[#00733f] text-white rounded-xl text-xs font-bold hover:bg-emerald-700"
+            >
+              Iniciar Primeiro Simulado Agora
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <tr>
+                  <th className="py-2.5 px-3">Data</th>
+                  <th className="py-2.5 px-3">Filtro / Tema</th>
+                  <th className="py-2.5 px-3">Dificuldade</th>
+                  <th className="py-2.5 px-3">Acertos</th>
+                  <th className="py-2.5 px-3">Nota</th>
+                  <th className="py-2.5 px-3">Tempo Gasto</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {simulados.map((s, idx) => (
+                  <tr key={s.id || idx} className="hover:bg-slate-50/80">
+                    <td className="py-2.5 px-3 text-slate-700 font-medium">{s.data}</td>
+                    <td className="py-2.5 px-3 text-slate-600">
+                      {s.unidadeFiltro === 'Todas' ? 'Todas as Unidades' : `Unidade ${s.unidadeFiltro}`}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                        {s.dificuldade}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-800 font-bold">
+                      {s.acertos} / {s.total}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className={`px-2 py-0.5 rounded font-black font-mono ${
+                        s.nota >= 7 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                      }`}>
+                        {s.nota.toFixed(1)}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-500 font-mono">
+                      {Math.floor((s.tempoGastoSegundos || 0) / 60)}m {(s.tempoGastoSegundos || 0) % 60}s
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Calendário & Datas Oficiais de Provas (13/08 a 03/12) */}
@@ -101,241 +318,57 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           )}
         </div>
 
-        {/* 4 Cards de Provas para Acompanhamento Rápido */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
-          {/* Prova 1 */}
-          <div className="p-3 rounded-xl bg-amber-50/60 border border-amber-200 relative">
+          <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
-                1ª Avaliação
+              <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
+                1ª Avaliação Oficial
               </span>
               <span className="font-mono text-xs font-black text-amber-900 bg-white px-2 py-0.5 rounded border border-amber-200">
                 24/09
               </span>
             </div>
-            <h4 className="font-bold text-xs text-slate-900 mt-2">Fundamentos & Falhas</h4>
-            <p className="text-[11px] text-slate-600 mt-0.5">Aulas 01 a 04 • Mesmo Peso (33,3%)</p>
+            <h4 className="font-bold text-xs text-slate-900 mt-2">Fundamentos & Falhas de Mercado</h4>
+            <p className="text-[11px] text-slate-600 mt-0.5">Aulas 01 a 04 • Peso 33,3%</p>
           </div>
 
-          {/* Prova 2 */}
-          <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-200 relative">
+          <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#002752] bg-blue-100 px-1.5 py-0.5 rounded">
-                2ª Avaliação
+              <span className="text-[10px] font-black uppercase text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded">
+                2ª Avaliação Oficial
               </span>
-              <span className="font-mono text-xs font-black text-[#002752] bg-white px-2 py-0.5 rounded border border-blue-200">
-                22/10
+              <span className="font-mono text-xs font-black text-blue-900 bg-white px-2 py-0.5 rounded border border-blue-200">
+                29/10
               </span>
             </div>
-            <h4 className="font-bold text-xs text-slate-900 mt-2">Bens Públicos & Tributação</h4>
-            <p className="text-[11px] text-slate-600 mt-0.5">Aulas 05 a 08 • Mesmo Peso (33,3%)</p>
+            <h4 className="font-bold text-xs text-slate-900 mt-2">Tributação & Escolha Pública</h4>
+            <p className="text-[11px] text-slate-600 mt-0.5">Aulas 05 a 09 • Peso 33,3%</p>
           </div>
 
-          {/* Prova 3 */}
-          <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200 relative">
+          <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#00733f] bg-emerald-100 px-1.5 py-0.5 rounded">
-                3ª Avaliação
+              <span className="text-[10px] font-black uppercase text-[#00733f] bg-emerald-100 px-1.5 py-0.5 rounded">
+                3ª Avaliação Oficial
               </span>
-              <span className="font-mono text-xs font-black text-emerald-900 bg-white px-2 py-0.5 rounded border border-emerald-200">
+              <span className="font-mono text-xs font-black text-[#002752] bg-white px-2 py-0.5 rounded border border-emerald-200">
                 26/11
               </span>
             </div>
-            <h4 className="font-bold text-xs text-slate-900 mt-2">Escolha Pública & Federalismo</h4>
-            <p className="text-[11px] text-slate-600 mt-0.5">Aulas 09 a 12 • Mesmo Peso (33,3%)</p>
+            <h4 className="font-bold text-xs text-slate-900 mt-2">Arrow & Federalismo Fiscal</h4>
+            <p className="text-[11px] text-slate-600 mt-0.5">Aulas 10 a 12 • Peso 33,4%</p>
           </div>
 
-          {/* Prova Final */}
-          <div className="p-3 rounded-xl bg-purple-50/60 border border-purple-200 relative">
+          <div className="p-3.5 rounded-xl bg-purple-50/70 border border-purple-200">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded">
-                Prova Final
+              <span className="text-[10px] font-black uppercase text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded">
+                Exame Final
               </span>
               <span className="font-mono text-xs font-black text-purple-900 bg-white px-2 py-0.5 rounded border border-purple-200">
                 03/12
               </span>
             </div>
-            <h4 className="font-bold text-xs text-slate-900 mt-2">Exame Cumulativo</h4>
-            <p className="text-[11px] text-slate-600 mt-0.5">Aulas 01 a 12 • Encerramento</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Student Personal Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#002752]/10 flex items-center justify-center text-[#002752]">
-            <BookOpen className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Aulas Concluídas</span>
-            <div className="text-2xl font-black text-[#002752] font-mono">9 / 12</div>
-            <span className="text-[11px] text-[#00733f] font-medium">75% da ementa oficial</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#00733f]/10 flex items-center justify-center text-[#00733f]">
-            <Award className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Média nos Simulados</span>
-            <div className="text-2xl font-black text-[#00733f] font-mono">8.5</div>
-            <span className="text-[11px] text-slate-500">Escala de 0 a 10</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Questões Praticadas</span>
-            <div className="text-2xl font-black text-slate-800 font-mono">78</div>
-            <span className="text-[11px] text-emerald-700 font-bold">84.6% de acerto</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-700">
-            <Clock className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Tempo de Estudo</span>
-            <div className="text-2xl font-black text-indigo-900 font-mono">14h 20m</div>
-            <span className="text-[11px] text-indigo-600 font-medium">No semestre atual</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Section: Roadmap and Diagnostic */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Recommended Next Steps */}
-        <div className="lg:col-span-7 bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="font-bold text-base text-[#002752] flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#ebc000]" />
-              Próximas Metas Recomendadas para Você
-            </h3>
-            <span className="text-xs font-semibold text-slate-500">Plano Individual</span>
-          </div>
-
-          <div className="space-y-3">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#002752] text-white">
-                  Módulo II • Em Andamento
-                </span>
-                <h4 className="font-bold text-sm text-slate-900 mt-1">
-                  Aula 8: Eficiência Econômica da Tributação & Regra de Ramsey
-                </h4>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  Estude a derivação matemática da tributação ótima e o peso morto quadrático de Harberger.
-                </p>
-              </div>
-              <button
-                onClick={onNavigateToLessons}
-                className="px-3 py-2 bg-white hover:bg-slate-100 text-[#002752] font-bold text-xs rounded-lg border border-slate-300 shrink-0 flex items-center gap-1"
-              >
-                Abrir Aula <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 flex items-center justify-between gap-4">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#00733f] text-white">
-                  Laboratório Prático
-                </span>
-                <h4 className="font-bold text-sm text-slate-900 mt-1">
-                  Simulador do Teorema de Kenneth Arrow (Ciclos de Condorcet)
-                </h4>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  Experimente o paradoxo de intransitividade e teste os 4 axiomas democráticos da escolha social.
-                </p>
-              </div>
-              <button
-                onClick={onNavigateToSimulators}
-                className="px-3 py-2 bg-white hover:bg-emerald-50 text-[#00733f] font-bold text-xs rounded-lg border border-emerald-300 shrink-0 flex items-center gap-1"
-              >
-                Simular <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200 flex items-center justify-between gap-4">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#ebc000] text-[#002752]">
-                  Simulado de Fixação
-                </span>
-                <h4 className="font-bold text-sm text-slate-900 mt-1">
-                  Treino com 5 Questões de Dificuldade Média e Alta
-                </h4>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  Reforce seus pontos de melhoria com justificativas comentadas das obras de Arvate e Biderman.
-                </p>
-              </div>
-              <button
-                onClick={onNavigateToQuiz}
-                className="px-3 py-2 bg-white hover:bg-amber-100 text-amber-900 font-bold text-xs rounded-lg border border-amber-300 shrink-0 flex items-center gap-1"
-              >
-                Treinar <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Cognitive Strength & Diagnostic Breakdown */}
-        <div className="lg:col-span-5 bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="font-bold text-base text-[#002752] flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-[#00733f]" />
-              Diagnóstico de Desempenho
-            </h3>
-            <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-              Status: Estável
-            </span>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            <div>
-              <div className="flex justify-between font-semibold text-slate-700 mb-1">
-                <span>Questões Nível Baixa (Conceitual)</span>
-                <span className="font-mono text-[#00733f]">95% de acerto</span>
-              </div>
-              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-[#00733f] rounded-full" style={{ width: '95%' }} />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between font-semibold text-slate-700 mb-1">
-                <span>Questões Nível Média (Aplicação em Cenários)</span>
-                <span className="font-mono text-[#002752]">85% de acerto</span>
-              </div>
-              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-[#002752] rounded-full" style={{ width: '85%' }} />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between font-semibold text-slate-700 mb-1">
-                <span>Questões Nível Alta (Teoremas & Derivações)</span>
-                <span className="font-mono text-amber-700">60% de acerto</span>
-              </div>
-              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-[#ebc000] rounded-full" style={{ width: '60%' }} />
-              </div>
-            </div>
-
-            {/* Critical topics alert */}
-            <div className="p-3.5 bg-amber-50 rounded-lg border border-amber-200 text-amber-950 space-y-1 mt-4">
-              <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
-                <span>Ponto de Atenção para a Próxima Avaliação:</span>
-              </div>
-              <p className="text-[11px] leading-relaxed">
-                Você teve maior índice de dúvida em questões envolvendo a <strong>Regra da Elasticidade Inversa de Ramsey</strong> e a condição de equilíbrio da <strong>Burocracia de Niskanen (BT=CT)</strong>. Recomendamos revisar as aulas 8 e 9 antes da prova.
-              </p>
-            </div>
+            <h4 className="font-bold text-xs text-slate-900 mt-2">Prova Final (Todo Conteúdo)</h4>
+            <p className="text-[11px] text-slate-600 mt-0.5">Para discentes com 4,0 ≤ Média &lt; 7,0</p>
           </div>
         </div>
       </div>

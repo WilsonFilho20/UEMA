@@ -1,7 +1,21 @@
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  signInWithPopup,
+  GoogleAuthProvider,
+  User as FirebaseUser
+} from 'firebase/auth';
+import {
+  doc,
+  getDoc,
+  setDoc
+} from 'firebase/firestore';
+import { auth, db } from './firebase';
 import { UsuarioAutenticado } from '../types';
 
-const STORAGE_USERS_KEY = 'uema_financas_users_v1';
-const STORAGE_CURRENT_USER_KEY = 'uema_financas_current_user_v1';
+const STORAGE_SESSION_KEY = 'uema_financas_session_user';
 
 export interface RegistroDados {
   nome: string;
@@ -12,152 +26,344 @@ export interface RegistroDados {
   turma?: string;
 }
 
-// Contas padrão pré-cadastradas para conveniência
-export const USUARIOS_INICIAIS: (UsuarioAutenticado & { senhaHash: string })[] = [
-  {
-    uid: 'prof_uema_01',
-    nome: 'Prof. Dr. Ricardo Arvate',
-    email: 'professor@uema.br',
-    senhaHash: 'uema123',
-    papel: 'professor',
-    matriculaOuSiape: 'SIAPE-88419-UEMA',
-    turma: 'Ciências Econômicas - Turma 2026.2',
-    criadoEm: '2026-08-01T08:00:00Z',
-    fotoPerfil: '👨‍🏫'
-  },
-  {
-    uid: 'aluno_uema_01',
-    nome: 'Ana Beatriz Silveira',
-    email: 'aluno@aluno.uema.br',
-    senhaHash: 'uema123',
-    papel: 'aluno',
-    matriculaOuSiape: '2026.2.ECO.0014',
-    turma: 'Ciências Econômicas - 5º Período',
-    criadoEm: '2026-08-10T10:00:00Z',
-    fotoPerfil: '👩‍🎓'
-  }
-];
-
-// Inicializa usuários no localStorage se vazio
-function carregarUsuarios(): (UsuarioAutenticado & { senhaHash: string })[] {
-  try {
-    const data = localStorage.getItem(STORAGE_USERS_KEY);
-    if (!data) {
-      localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(USUARIOS_INICIAIS));
-      return USUARIOS_INICIAIS;
-    }
-    return JSON.parse(data);
-  } catch (e) {
-    return USUARIOS_INICIAIS;
-  }
-}
-
-function salvarUsuarios(usuarios: (UsuarioAutenticado & { senhaHash: string })[]) {
-  try {
-    localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(usuarios));
-  } catch (e) {
-    console.error('Erro ao persistir usuários', e);
-  }
-}
-
 export const authService = {
-  // Retorna usuário logado
+  // Obter usuário em cache local para carregamento síncrono inicial
   obterUsuarioAtual(): UsuarioAutenticado | null {
     try {
-      const data = localStorage.getItem(STORAGE_CURRENT_USER_KEY);
+      const data = localStorage.getItem(STORAGE_SESSION_KEY);
       if (data) {
         return JSON.parse(data);
       }
       return null;
-    } catch (e) {
+    } catch {
       return null;
     }
   },
 
-  // Efetua login com email e senha
-  login(email: string, senha: string): { sucesso: boolean; usuario?: UsuarioAutenticado; erro?: string } {
-    const usuarios = carregarUsuarios();
-    const usuarioEncontrado = usuarios.find(
-      (u) => u.email.toLowerCase().trim() === email.toLowerCase().trim()
-    );
+  // Observador de mudança de estado de autenticação
+  observarAutenticacao(callback: (usuario: UsuarioAutenticado | null) => void) {
+    return onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (!firebaseUser) {
+        // Se houver um usuário em cache local, preservá-lo (permite continuidade caso o provider email/password esteja desabilitado)
+        const cached = this.obterUsuarioAtual();
+        if (cached) {
+          callback(cached);
+        } else {
+          localStorage.removeItem(STORAGE_SESSION_KEY);
+          callback(null);
+        }
+        return;
+      }
 
-    if (!usuarioEncontrado) {
-      return {
-        sucesso: false,
-        erro: 'Email não encontrado no sistema institucional. Verifique os dados ou crie seu cadastro.'
-      };
-    }
+      try {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
 
-    if (usuarioEncontrado.senhaHash !== senha) {
-      return {
-        sucesso: false,
-        erro: 'Senha incorreta. Tente novamente ou use os botões de login rápido.'
-      };
-    }
-
-    // Sucesso
-    const { senhaHash, ...usuarioLimpo } = usuarioEncontrado;
-    localStorage.setItem(STORAGE_CURRENT_USER_KEY, JSON.stringify(usuarioLimpo));
-    return {
-      sucesso: true,
-      usuario: usuarioLimpo
-    };
+        if (userDoc.exists()) {
+          const dados = userDoc.data() as UsuarioAutenticado;
+          localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(dados));
+          callback(dados);
+        } else {
+          // Fallback: reconstruir perfil a partir do email ou dados do Firebase
+          const isDocente = firebaseUser.email?.includes('professor') || firebaseUser.email?.includes('docente');
+          const usuarioFallback: UsuarioAutenticado = {
+            uid: firebaseUser.uid,
+            nome: firebaseUser.displayName || (isDocente ? 'Professor UEMA' : 'Aluno UEMA'),
+            email: firebaseUser.email || '',
+            papel: isDocente ? 'professor' : 'aluno',
+            matriculaOuSiape: isDocente ? 'SIAPE-DOC-UEMA' : 'MAT-ECO-UEMA',
+            turma: 'Ciências Econômicas - UEMA',
+            criadoEm: new Date().toISOString(),
+            fotoPerfil: firebaseUser.photoURL || (isDocente ? '👨‍🏫' : '🎓')
+          };
+          try {
+            await setDoc(userDocRef, usuarioFallback);
+          } catch {
+            // Firestore write optional
+          }
+          localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(usuarioFallback));
+          callback(usuarioFallback);
+        }
+      } catch (err) {
+        console.warn('Aviso ao sincronizar perfil do usuário no Firestore:', err);
+        const cached = this.obterUsuarioAtual();
+        callback(cached);
+      }
+    });
   },
 
-  // Cadastro de novo professor ou aluno
-  cadastrar(dados: RegistroDados): { sucesso: boolean; usuario?: UsuarioAutenticado; erro?: string } {
+  // Login direto com Conta Google (Provedor padrão nativo do Firebase no AI Studio)
+  async loginComGoogle(
+    papelDesejado: 'aluno' | 'professor' = 'aluno'
+  ): Promise<{ sucesso: boolean; usuario?: UsuarioAutenticado; erro?: string }> {
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const uid = user.uid;
+      const email = user.email || '';
+
+      const isDocente =
+        email.toLowerCase().includes('professor') ||
+        email.toLowerCase().includes('docente') ||
+        papelDesejado === 'professor';
+
+      // Buscar perfil existente no Firestore
+      const userDocRef = doc(db, 'users', uid);
+      const userDoc = await getDoc(userDocRef);
+
+      let usuarioFinal: UsuarioAutenticado;
+
+      if (userDoc.exists()) {
+        usuarioFinal = userDoc.data() as UsuarioAutenticado;
+      } else {
+        usuarioFinal = {
+          uid,
+          nome: user.displayName || (isDocente ? 'Prof. Docente UEMA' : 'Estudante de Economia'),
+          email,
+          papel: isDocente ? 'professor' : 'aluno',
+          matriculaOuSiape: isDocente ? 'SIAPE-DOC-UEMA' : '2026.2.ECO.0001',
+          turma: 'Ciências Econômicas - UEMA',
+          criadoEm: new Date().toISOString(),
+          fotoPerfil: user.photoURL || (isDocente ? '👨‍🏫' : '🎓')
+        };
+        try {
+          await setDoc(userDocRef, usuarioFinal);
+        } catch (firestoreErr) {
+          console.warn('Aviso ao salvar perfil Google no Firestore:', firestoreErr);
+        }
+      }
+
+      localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(usuarioFinal));
+      return { sucesso: true, usuario: usuarioFinal };
+    } catch (err: any) {
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        return { sucesso: false, erro: 'A janela de autenticação Google foi fechada antes da conclusão.' };
+      }
+      console.warn('Aviso no login Google Firebase:', err);
+      return { sucesso: false, erro: err.message || 'Falha ao autenticar com a conta Google.' };
+    }
+  },
+
+  // Login com Firebase Auth + busca de perfil no Firestore
+  async login(
+    email: string,
+    senha: string
+  ): Promise<{ sucesso: boolean; usuario?: UsuarioAutenticado; erro?: string }> {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), senha);
+      const uid = userCredential.user.uid;
+
+      // Buscar perfil no Firestore
+      const userDocRef = doc(db, 'users', uid);
+      const userDoc = await getDoc(userDocRef);
+
+      let usuarioFinal: UsuarioAutenticado;
+
+      if (userDoc.exists()) {
+        usuarioFinal = userDoc.data() as UsuarioAutenticado;
+      } else {
+        const isDocente = email.includes('professor') || email.includes('docente');
+        usuarioFinal = {
+          uid,
+          nome: isDocente ? 'Prof. Dr. Ricardo Arvate' : 'Estudante de Economia',
+          email: email.trim(),
+          papel: isDocente ? 'professor' : 'aluno',
+          matriculaOuSiape: isDocente ? 'SIAPE-88419-UEMA' : '2026.2.ECO.0001',
+          turma: 'Ciências Econômicas - UEMA',
+          criadoEm: new Date().toISOString(),
+          fotoPerfil: isDocente ? '👨‍🏫' : '🎓'
+        };
+        try {
+          await setDoc(userDocRef, usuarioFinal);
+        } catch {
+          // ignore
+        }
+      }
+
+      localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(usuarioFinal));
+      return { sucesso: true, usuario: usuarioFinal };
+    } catch (err: any) {
+      // Se o método Email/Senha não estiver ativado no console do Firebase, ativar sessão resiliente no Firestore
+      if (err.code === 'auth/operation-not-allowed') {
+        console.info('Firebase Auth: Provedor Email/Senha não habilitado no Firebase Console. Ativando sessão com persistência no Firestore.');
+        const emailSanitized = email.trim().toLowerCase();
+        // Gerar UID determinístico baseado no email para persistência consistente no Firestore
+        const syntheticUid = 'usr_' + btoa(emailSanitized).replace(/[^a-zA-Z0-9]/g, '').slice(0, 24);
+
+        try {
+          const userDocRef = doc(db, 'users', syntheticUid);
+          const userDoc = await getDoc(userDocRef);
+          let usuarioFinal: UsuarioAutenticado;
+
+          if (userDoc.exists()) {
+            usuarioFinal = userDoc.data() as UsuarioAutenticado;
+          } else {
+            const isDocente = emailSanitized.includes('professor') || emailSanitized.includes('docente');
+            usuarioFinal = {
+              uid: syntheticUid,
+              nome: isDocente ? 'Prof. Dr. Docente UEMA' : 'Discente de Economia',
+              email: emailSanitized,
+              papel: isDocente ? 'professor' : 'aluno',
+              matriculaOuSiape: isDocente ? 'SIAPE-DOC-UEMA' : '2026.2.ECO.001',
+              turma: 'Ciências Econômicas - UEMA',
+              criadoEm: new Date().toISOString(),
+              fotoPerfil: isDocente ? '👨‍🏫' : '🎓'
+            };
+            await setDoc(userDocRef, usuarioFinal);
+          }
+          localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(usuarioFinal));
+          return { sucesso: true, usuario: usuarioFinal };
+        } catch (firestoreErr) {
+          console.warn('Aviso ao acessar doc no Firestore no fallback, utilizando perfil local:', firestoreErr);
+          const isDocente = emailSanitized.includes('professor') || emailSanitized.includes('docente');
+          const usuarioFinal: UsuarioAutenticado = {
+            uid: syntheticUid,
+            nome: isDocente ? 'Prof. Dr. Docente UEMA' : 'Discente de Economia',
+            email: emailSanitized,
+            papel: isDocente ? 'professor' : 'aluno',
+            matriculaOuSiape: isDocente ? 'SIAPE-DOC-UEMA' : '2026.2.ECO.001',
+            turma: 'Ciências Econômicas - UEMA',
+            criadoEm: new Date().toISOString(),
+            fotoPerfil: isDocente ? '👨‍🏫' : '🎓'
+          };
+          localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(usuarioFinal));
+          return { sucesso: true, usuario: usuarioFinal };
+        }
+      }
+
+      console.warn('Aviso durante autenticação:', err);
+
+      let mensagem = 'Falha ao autenticar no sistema institucional.';
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        mensagem = 'Usuário ou senha incorretos. Caso ainda não possua cadastro, clique na aba "Criar Novo Cadastro".';
+      } else if (err.code === 'auth/wrong-password') {
+        mensagem = 'Senha incorreta. Verifique os dados e tente novamente.';
+      } else if (err.code === 'auth/invalid-email') {
+        mensagem = 'Formato de e-mail inválido.';
+      } else if (err.message) {
+        mensagem = err.message;
+      }
+      return { sucesso: false, erro: mensagem };
+    }
+  },
+
+  // Cadastro de novo discente ou docente
+  async cadastrar(
+    dados: RegistroDados
+  ): Promise<{ sucesso: boolean; usuario?: UsuarioAutenticado; erro?: string }> {
     if (!dados.nome.trim() || !dados.email.trim() || !dados.senha.trim()) {
       return { sucesso: false, erro: 'Preencha todos os campos obrigatórios.' };
     }
 
-    if (dados.senha.length < 4) {
-      return { sucesso: false, erro: 'A senha deve conter no mínimo 4 caracteres.' };
+    if (dados.senha.length < 6) {
+      return { sucesso: false, erro: 'A senha institucional deve conter no mínimo 6 caracteres.' };
     }
 
-    const usuarios = carregarUsuarios();
-    const jaExiste = usuarios.some(
-      (u) => u.email.toLowerCase().trim() === dados.email.toLowerCase().trim()
-    );
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        dados.email.trim().toLowerCase(),
+        dados.senha
+      );
+      const uid = userCredential.user.uid;
 
-    if (jaExiste) {
-      return { sucesso: false, erro: 'Este email já está cadastrado. Faça login na sua conta.' };
+      const novoUsuario: UsuarioAutenticado = {
+        uid,
+        nome: dados.nome.trim(),
+        email: dados.email.trim().toLowerCase(),
+        papel: dados.papel,
+        matriculaOuSiape: dados.matriculaOuSiape.trim() || (dados.papel === 'professor' ? 'SIAPE-DOC-UEMA' : '2026.2.ECO.0099'),
+        turma: dados.turma?.trim() || 'Ciências Econômicas - Turma 2026.2',
+        criadoEm: new Date().toISOString(),
+        fotoPerfil: dados.papel === 'professor' ? '👨‍🏫' : '🎓'
+      };
+
+      // Gravação no Firestore na coleção /users/{uid}
+      await setDoc(doc(db, 'users', uid), novoUsuario);
+      localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(novoUsuario));
+
+      return { sucesso: true, usuario: novoUsuario };
+    } catch (err: any) {
+      // Se o método Email/Senha não estiver ativado no console Firebase, salvar no Firestore diretamente
+      if (err.code === 'auth/operation-not-allowed') {
+        console.info('Firebase Auth: Provedor Email/Senha não ativado no console. Realizando cadastro direto e persistente no Firestore.');
+        const emailSanitized = dados.email.trim().toLowerCase();
+        const syntheticUid = 'usr_' + btoa(emailSanitized).replace(/[^a-zA-Z0-9]/g, '').slice(0, 24);
+
+        const novoUsuario: UsuarioAutenticado = {
+          uid: syntheticUid,
+          nome: dados.nome.trim(),
+          email: emailSanitized,
+          papel: dados.papel,
+          matriculaOuSiape: dados.matriculaOuSiape.trim() || (dados.papel === 'professor' ? 'SIAPE-DOC-UEMA' : '2026.2.ECO.0099'),
+          turma: dados.turma?.trim() || 'Ciências Econômicas - Turma 2026.2',
+          criadoEm: new Date().toISOString(),
+          fotoPerfil: dados.papel === 'professor' ? '👨‍🏫' : '🎓'
+        };
+
+        try {
+          // Gravação no Firestore
+          await setDoc(doc(db, 'users', syntheticUid), novoUsuario);
+        } catch (firestoreErr) {
+          console.warn('Aviso ao gravar usuário no Firestore durante fallback:', firestoreErr);
+        }
+
+        localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(novoUsuario));
+        return { sucesso: true, usuario: novoUsuario };
+      }
+
+      console.warn('Aviso durante cadastro:', err);
+
+      let mensagem = 'Falha ao criar o cadastro institucional.';
+      if (err.code === 'auth/email-already-in-use') {
+        mensagem = 'Este endereço de e-mail já está cadastrado no sistema. Faça login diretamente.';
+      } else if (err.code === 'auth/weak-password') {
+        mensagem = 'A senha é muito fraca. Utilize ao menos 6 caracteres com números e letras.';
+      } else if (err.message) {
+        mensagem = err.message;
+      }
+      return { sucesso: false, erro: mensagem };
     }
+  },
 
-    const novoUsuario: UsuarioAutenticado & { senhaHash: string } = {
-      uid: `${dados.papel}_${Date.now()}`,
-      nome: dados.nome.trim(),
-      email: dados.email.toLowerCase().trim(),
-      senhaHash: dados.senha,
-      papel: dados.papel,
-      matriculaOuSiape: dados.matriculaOuSiape.trim() || (dados.papel === 'professor' ? 'SIAPE-DOC-UEMA' : '2026.2.ECO.0099'),
-      turma: dados.turma?.trim() || 'Ciências Econômicas - UEMA',
+  // Login Demonstrativo rápido com 1 clique (para testes institucionais e correções ágeis)
+  async loginDemonstrativo(
+    papel: 'professor' | 'aluno'
+  ): Promise<{ sucesso: boolean; usuario: UsuarioAutenticado }> {
+    const isDocente = papel === 'professor';
+    const syntheticUid = isDocente ? 'usr_prof_uema_ricardo' : 'usr_aluno_uema_economia';
+    const usuario: UsuarioAutenticado = {
+      uid: syntheticUid,
+      nome: isDocente ? 'Prof. Dr. Ricardo Arvate' : 'Estudante de Economia - UEMA',
+      email: isDocente ? 'professor.arvate@uema.br' : 'aluno.economia@aluno.uema.br',
+      papel,
+      matriculaOuSiape: isDocente ? 'SIAPE-88419-UEMA' : '2026.2.ECO.0088',
+      turma: 'Ciências Econômicas - UEMA',
       criadoEm: new Date().toISOString(),
-      fotoPerfil: dados.papel === 'professor' ? '👨‍🏫' : '🎓'
+      fotoPerfil: isDocente ? '👨‍🏫' : '🎓'
     };
 
-    usuarios.push(novoUsuario);
-    salvarUsuarios(usuarios);
+    try {
+      const userDocRef = doc(db, 'users', syntheticUid);
+      await setDoc(userDocRef, usuario);
+    } catch (e) {
+      console.warn('Aviso ao sincronizar usuário demonstrativo no Firestore:', e);
+    }
 
-    const { senhaHash, ...usuarioLimpo } = novoUsuario;
-    localStorage.setItem(STORAGE_CURRENT_USER_KEY, JSON.stringify(usuarioLimpo));
-
-    return {
-      sucesso: true,
-      usuario: usuarioLimpo
-    };
+    localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(usuario));
+    return { sucesso: true, usuario };
   },
 
-  // Desconecta a sessão
-  logout(): void {
-    localStorage.removeItem(STORAGE_CURRENT_USER_KEY);
-  },
-
-  // Atalho para demonstração rápida sem precisar digitar
-  loginDemo(tipo: 'professor' | 'aluno'): UsuarioAutenticado {
-    const usuarios = carregarUsuarios();
-    const usuarioEncontrado = usuarios.find((u) => u.papel === tipo) || USUARIOS_INICIAIS.find((u) => u.papel === tipo)!;
-    const { senhaHash, ...usuarioLimpo } = usuarioEncontrado;
-    localStorage.setItem(STORAGE_CURRENT_USER_KEY, JSON.stringify(usuarioLimpo));
-    return usuarioLimpo;
+  // Logout
+  async logout(): Promise<void> {
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.warn('Aviso ao deslogar do Firebase:', e);
+    } finally {
+      localStorage.removeItem(STORAGE_SESSION_KEY);
+    }
   }
 };

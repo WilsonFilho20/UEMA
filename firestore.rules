@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isDocente() {
+      return isAuthenticated() && (
+        request.auth.token.email.matches('.*professor.*') ||
+        request.auth.token.email.matches('.*docente.*') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.papel == 'professor')
+      );
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isDocente();
+    }
+
+    match /simulados_realizados/{simuladoId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isDocente();
+    }
+
+    match /provas_geradas/{provaId} {
+      allow read: if true;
+      allow write: if isDocente() || isAuthenticated();
+      allow create: if true;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

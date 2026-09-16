@@ -12,12 +12,18 @@ import {
   Pause,
   Sliders,
   Sparkles,
-  Layers
+  Layers,
+  Save,
+  Check,
+  FileDown
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { QUESTOES_BANCO, DISTRIBUICAO_QUESTOES, GOOGLE_DRIVE_REPO } from '../data/questionsData';
 import { Dificuldade, Questao, ResultadoSimulado } from '../types';
 import { UemaEconomiaLogo } from './UemaEconomiaLogo';
+import { authService } from '../services/authService';
+import { firestoreDataService } from '../services/firestoreDataService';
+import { exportarProvaParaPDF } from '../utils/pdfExportService';
 
 export const SimuladoComponent: React.FC = () => {
   // Setup state
@@ -34,11 +40,15 @@ export const SimuladoComponent: React.FC = () => {
   const [indiceAtual, setIndiceAtual] = useState<number>(0);
   const [respostas, setRespostas] = useState<Record<string, 'A' | 'B' | 'C' | 'D' | 'E'>>({});
   const [mostrarGabaritoAtual, setMostrarGabaritoAtual] = useState<boolean>(false);
+  const [salvoNoBanco, setSalvoNoBanco] = useState<boolean>(false);
 
   // Timer state
   const [segundosRestantes, setSegundosRestantes] = useState<number>(15 * 60);
   const [timerAtivo, setTimerAtivo] = useState<boolean>(false);
   const timerRef = useRef<any>(null);
+
+  // Obter usuário logado atual
+  const usuario = authService.obterUsuarioAtual();
 
   // Filter and build question list
   const iniciarSimulado = () => {
@@ -63,6 +73,7 @@ export const SimuladoComponent: React.FC = () => {
     setSimuladoIniciado(true);
     setSegundosRestantes(tempoInicialMinutos * 60);
     setTimerAtivo(true);
+    setSalvoNoBanco(false);
   };
 
   // Timer tick
@@ -115,42 +126,15 @@ export const SimuladoComponent: React.FC = () => {
     }
   };
 
-  const finalizarSimulado = () => {
-    setSimuladoFinalizado(true);
-    setTimerAtivo(false);
-
-    // Calcular nota
-    let acertos = 0;
-    questoesAtuais.forEach((q) => {
-      if (respostas[q.id] === q.resposta_correta) {
-        acertos++;
-      }
-    });
-
-    const percentual = (acertos / questoesAtuais.length) * 100;
-    if (percentual >= 70) {
-      confetti({
-        particleCount: 80,
-        spread: 60,
-        origin: { y: 0.6 }
-      });
-    }
-  };
-
-  const reiniciar = () => {
-    setSimuladoIniciado(false);
-    setSimuladoFinalizado(false);
-    setRespostas({});
-    setQuestoesAtuais([]);
-  };
-
   // Estatísticas do resultado final
   const resultado: ResultadoSimulado = useMemo(() => {
     let acertos = 0;
     const porUnidade: Record<number, { acertos: number; total: number }> = {
       1: { acertos: 0, total: 0 },
       2: { acertos: 0, total: 0 },
-      3: { acertos: 0, total: 0 }
+      3: { acertos: 0, total: 0 },
+      4: { acertos: 0, total: 0 },
+      5: { acertos: 0, total: 0 }
     };
 
     questoesAtuais.forEach((q) => {
@@ -182,6 +166,58 @@ export const SimuladoComponent: React.FC = () => {
     };
   }, [questoesAtuais, respostas, segundosRestantes, tempoInicialMinutos, dificuldadeFiltro]);
 
+  const finalizarSimulado = () => {
+    setSimuladoFinalizado(true);
+    setTimerAtivo(false);
+
+    // Calcular acertos
+    let acertos = 0;
+    const errosIds: string[] = [];
+    questoesAtuais.forEach((q) => {
+      if (respostas[q.id] === q.resposta_correta) {
+        acertos++;
+      } else {
+        errosIds.push(q.id);
+      }
+    });
+
+    const percentual = (acertos / (questoesAtuais.length || 1)) * 100;
+    if (percentual >= 70) {
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.6 }
+      });
+    }
+
+    // Persistir no Firestore
+    if (usuario) {
+      firestoreDataService
+        .salvarResultadoSimulado({
+          alunoId: usuario.uid,
+          alunoNome: usuario.nome,
+          alunoMatricula: usuario.matriculaOuSiape,
+          resultado,
+          unidadeFiltro: unidadeFiltro,
+          errosQuestoesIds: errosIds
+        })
+        .then(() => {
+          setSalvoNoBanco(true);
+        })
+        .catch((err) => {
+          console.error('Erro ao sincronizar com Firestore:', err);
+        });
+    }
+  };
+
+  const reiniciar = () => {
+    setSimuladoIniciado(false);
+    setSimuladoFinalizado(false);
+    setRespostas({});
+    setQuestoesAtuais([]);
+    setSalvoNoBanco(false);
+  };
+
   const questaoAtiva = questoesAtuais[indiceAtual];
   const respostaSelecionada = questaoAtiva ? respostas[questaoAtiva.id] : undefined;
   const respondeuAtual = respostaSelecionada !== undefined;
@@ -193,17 +229,17 @@ export const SimuladoComponent: React.FC = () => {
         <div className="flex-1 min-w-[280px]">
           <div className="flex items-center gap-2 mb-2">
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#ebc000] text-[#002752] uppercase tracking-wider">
-              Ambiente de Simulação e Treinamento
+              Ambiente de Treinamento e Simulação
             </span>
             <span className="text-xs text-slate-300">
               Banco de 1.000 Questões com Gabarito Comentado • UEMA
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold font-serif tracking-tight">
-            Simulado Interativo de Finanças Públicas
+            Simulado de Finanças Públicas
           </h2>
           <p className="text-sm text-slate-200 mt-1 max-w-2xl">
-            Pratique os conceitos teóricos de Musgrave, Coase, Arrow, Niskanen e Harberger com cronômetro ativo e justificativas referenciadas nas obras do Google Drive.
+            Pratique os conceitos teóricos de Musgrave, Coase, Arrow, Niskanen e Harberger com cronômetro ativo e persistência automática no seu perfil e painel docente.
           </p>
         </div>
 
@@ -223,7 +259,7 @@ export const SimuladoComponent: React.FC = () => {
               </div>
               <button
                 onClick={() => setTimerAtivo(!timerAtivo)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
                 title={timerAtivo ? 'Pausar Cronômetro' : 'Retomar Cronômetro'}
               >
                 {timerAtivo ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -242,7 +278,7 @@ export const SimuladoComponent: React.FC = () => {
               Configurar Sessão de Estudo
             </h3>
             <p className="text-xs text-slate-600 mt-0.5">
-              Defina o filtro de complexidade e o modo de resolução desejado.
+              Defina os parâmetros de temas e complexidade para a resolução.
             </p>
           </div>
 
@@ -309,279 +345,245 @@ export const SimuladoComponent: React.FC = () => {
                 onChange={(e) => setTempoInicialMinutos(Number(e.target.value))}
                 className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium"
               >
-                <option value={10}>10 Minutos (2 min / questão)</option>
-                <option value={15}>15 Minutos (3 min / questão)</option>
-                <option value={30}>30 Minutos (Ritmo Livre)</option>
+                <option value={10}>10 minutos</option>
+                <option value={15}>15 minutos</option>
+                <option value={20}>20 minutos</option>
+                <option value={30}>30 minutos</option>
               </select>
             </div>
           </div>
 
-          {/* Modo de Resolução */}
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <button
-              onClick={() => setModoEstudo(true)}
-              className={`p-3.5 rounded-lg border text-left transition-all ${
-                modoEstudo
-                  ? 'border-[#002752] bg-white ring-2 ring-[#002752]/20 font-bold text-[#002752]'
-                  : 'border-slate-200 bg-white/60 text-slate-600'
-              }`}
-            >
-              <div className="flex items-center gap-1.5 mb-1 font-semibold text-sm">
-                <Sparkles className="w-4 h-4 text-[#ebc000]" />
-                Modo Estudo Guiado (Recomendado)
-              </div>
-              <p className="text-[11px] font-normal text-slate-500">
-                O gabarito comentado com a justificativa teórica e bibliográfica aparece imediatamente após assinalar a alternativa.
-              </p>
-            </button>
-
-            <button
-              onClick={() => setModoEstudo(false)}
-              className={`p-3.5 rounded-lg border text-left transition-all ${
-                !modoEstudo
-                  ? 'border-[#00733f] bg-white ring-2 ring-[#00733f]/20 font-bold text-[#00733f]'
-                  : 'border-slate-200 bg-white/60 text-slate-600'
-              }`}
-            >
-              <div className="flex items-center gap-1.5 mb-1 font-semibold text-sm">
-                <Clock className="w-4 h-4 text-[#00733f]" />
-                Modo Prova Oficial (Simulação Real)
-              </div>
-              <p className="text-[11px] font-normal text-slate-500">
-                Você responde todas as questões sob contagem regressiva sem interrupções. O gabarito e a nota só são revelados ao final.
-              </p>
-            </button>
-          </div>
-
-          {/* Card Matriz de Dificuldade */}
-          <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-2">
-            <h4 className="font-bold text-xs text-[#002752]">Matriz de Competências Pedagógicas (1.000 Questões):</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
-              {DISTRIBUICAO_QUESTOES.map((item, idx) => (
-                <div key={idx} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">{item.nivel}</span>
-                  <span className="text-base font-black text-[#002752] font-mono">{item.percentual}%</span>
-                  <span className="text-[9px] text-slate-500 block leading-tight mt-0.5">{item.descricao}</span>
-                </div>
-              ))}
+          {/* Toggle Modo Estudo vs Exame */}
+          <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="modoEstudoToggle"
+                checked={modoEstudo}
+                onChange={(e) => setModoEstudo(e.target.checked)}
+                className="rounded border-slate-300 text-[#002752] focus:ring-[#002752] w-4 h-4 cursor-pointer"
+              />
+              <label htmlFor="modoEstudoToggle" className="text-slate-700 font-medium cursor-pointer">
+                <strong>Modo Feedback Imediato:</strong> Ver justificativa e gabarito logo após responder cada questão.
+              </label>
             </div>
-          </div>
 
-          <div className="flex justify-end pt-2">
             <button
               onClick={iniciarSimulado}
-              className="flex items-center gap-2 px-6 py-3 bg-[#00733f] hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-md transition-all hover:scale-[1.01]"
+              className="flex items-center gap-2 px-6 py-3 bg-[#002752] hover:bg-[#001c3d] text-white font-bold rounded-xl shadow-md transition-transform hover:scale-105 cursor-pointer text-xs"
             >
               <Play className="w-4 h-4 text-[#ebc000]" />
               Iniciar Simulado Agora
             </button>
           </div>
+
+          {/* Matriz de Dificuldade Informativa */}
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <span className="text-xs font-bold text-[#002752] block mb-2">
+              Distribuição Oficial do Banco de 1.000 Questões da UEMA:
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+              {DISTRIBUICAO_QUESTOES.map((d, i) => (
+                <div key={i} className="p-2 bg-white rounded-lg border border-slate-200 shadow-2xs">
+                  <span className="text-[11px] text-slate-500 block">{d.nivel}</span>
+                  <span className="text-sm font-black text-[#002752]">{d.percentual}%</span>
+                  <span className="text-[10px] text-slate-400 block">{d.percentual * 10} questões</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Screen 2: Questões em Andamento */}
+      {/* Screen 2: Simulado Ativo */}
       {simuladoIniciado && !simuladoFinalizado && questaoAtiva && (
-        <div className="space-y-4">
-          {/* Question Navigator Bar */}
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#002752]">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+          {/* Progress bar and badges */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-500">
+              <span className="font-semibold text-[#002752]">
                 Questão {indiceAtual + 1} de {questoesAtuais.length}
               </span>
-              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                questaoAtiva.dificuldade === 'Baixa' ? 'bg-emerald-100 text-emerald-800' :
-                questaoAtiva.dificuldade === 'Média-Baixa' ? 'bg-teal-100 text-teal-800' :
-                questaoAtiva.dificuldade === 'Média' ? 'bg-amber-100 text-amber-800' :
-                questaoAtiva.dificuldade === 'Média-Alta' ? 'bg-orange-100 text-orange-800' :
-                'bg-rose-100 text-rose-800'
-              }`}>
-                {questaoAtiva.dificuldade}
-              </span>
-              <span className="text-xs text-slate-500">
-                • Aula {questaoAtiva.aula_relacionada}: {questaoAtiva.topico}
+              <span>
+                Respondidas: <strong>{Object.keys(respostas).length}</strong> / {questoesAtuais.length}
               </span>
             </div>
-
-            {/* Fast Jump Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto">
-              {questoesAtuais.map((q, idx) => {
-                const marcada = respostas[q.id] !== undefined;
-                const estaAtiva = idx === indiceAtual;
-                return (
-                  <button
-                    key={q.id}
-                    onClick={() => {
-                      setIndiceAtual(idx);
-                      setMostrarGabaritoAtual(modoEstudo && respostas[q.id] !== undefined);
-                    }}
-                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
-                      estaAtiva
-                        ? 'bg-[#002752] text-white ring-2 ring-[#ebc000]'
-                        : marcada
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    {idx + 1}
-                  </button>
-                );
-              })}
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#002752] rounded-full transition-all duration-300"
+                style={{ width: `${((indiceAtual + 1) / questoesAtuais.length) * 100}%` }}
+              />
             </div>
           </div>
 
-          {/* Main Question Card */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
-            {/* Header info */}
-            <div className="border-b border-slate-100 pb-3 flex items-center justify-between text-xs text-slate-500">
-              <span>Código: <strong className="font-mono text-slate-800">{questaoAtiva.id}</strong></span>
-              <span>Unidade {questaoAtiva.unidade}</span>
-            </div>
+          {/* Question metadata tag */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="px-2.5 py-1 rounded-full font-bold bg-[#002752]/10 text-[#002752]">
+              Código: {questaoAtiva.id}
+            </span>
+            <span className="px-2.5 py-1 rounded-full font-medium bg-emerald-50 text-[#00733f] border border-emerald-200">
+              Unidade {questaoAtiva.unidade} • Aula {questaoAtiva.aula_relacionada}
+            </span>
+            <span className={`px-2.5 py-1 rounded-full font-semibold ${
+              questaoAtiva.dificuldade === 'Baixa' ? 'bg-emerald-100 text-emerald-800' :
+              questaoAtiva.dificuldade === 'Média-Baixa' ? 'bg-teal-100 text-teal-800' :
+              questaoAtiva.dificuldade === 'Média' ? 'bg-amber-100 text-amber-800' :
+              questaoAtiva.dificuldade === 'Média-Alta' ? 'bg-orange-100 text-orange-800' :
+              'bg-rose-100 text-rose-800'
+            }`}>
+              Dificuldade: {questaoAtiva.dificuldade}
+            </span>
+          </div>
 
-            {/* Enunciado */}
-            <p className="text-sm sm:text-base text-slate-900 leading-relaxed font-medium">
+          {/* Question Prompt */}
+          <div className="space-y-3">
+            <h4 className="text-base sm:text-lg font-serif font-bold text-slate-900 leading-relaxed">
               {questaoAtiva.enunciado}
-            </p>
+            </h4>
+          </div>
 
-            {/* Alternativas */}
-            <div className="space-y-2.5 text-xs sm:text-sm">
-              {Object.entries(questaoAtiva.alternativas).map(([letra, texto]) => {
-                const foiEscolhida = respostaSelecionada === letra;
-                const ehCorreta = letra === questaoAtiva.resposta_correta;
-                const revelarResultado = modoEstudo && mostrarGabaritoAtual;
+          {/* Alternatives */}
+          <div className="space-y-2.5">
+            {(['A', 'B', 'C', 'D', 'E'] as const).map((letra) => {
+              const selecionada = respostaSelecionada === letra;
+              const ehCorreta = questaoAtiva.resposta_correta === letra;
+              const mostrarFeedback = mostrarGabaritoAtual && modoEstudo;
 
-                let estilo = 'border-slate-200 bg-white hover:border-[#002752]/40 text-slate-800';
+              let estiloCard = 'border-slate-200 bg-white hover:bg-slate-50 text-slate-800';
 
-                if (revelarResultado) {
-                  if (ehCorreta) {
-                    estilo = 'border-[#00733f] bg-emerald-50 text-emerald-950 ring-2 ring-[#00733f]/30 font-medium';
-                  } else if (foiEscolhida && !ehCorreta) {
-                    estilo = 'border-rose-400 bg-rose-50 text-rose-950 font-medium';
-                  } else {
-                    estilo = 'border-slate-200 bg-white opacity-60 text-slate-500';
-                  }
-                } else if (foiEscolhida) {
-                  estilo = 'border-[#002752] bg-[#002752]/5 text-[#002752] ring-2 ring-[#002752]/20 font-semibold';
+              if (selecionada && !mostrarFeedback) {
+                estiloCard = 'border-[#002752] bg-[#002752]/5 text-[#002752] font-semibold ring-2 ring-[#002752]/20';
+              } else if (mostrarFeedback) {
+                if (ehCorreta) {
+                  estiloCard = 'border-emerald-500 bg-emerald-50 text-emerald-950 font-bold ring-2 ring-emerald-500/20';
+                } else if (selecionada && !ehCorreta) {
+                  estiloCard = 'border-rose-500 bg-rose-50 text-rose-950 font-medium ring-2 ring-rose-500/20';
                 }
+              }
 
-                return (
-                  <button
-                    key={letra}
-                    onClick={() => selecionarAlternativa(letra as any)}
-                    className={`w-full p-4 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${estilo}`}
-                  >
-                    <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-300 font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 text-slate-800">
-                      {letra}
-                    </span>
-                    <span className="flex-1 leading-relaxed">{texto}</span>
+              return (
+                <button
+                  key={letra}
+                  type="button"
+                  onClick={() => selecionarAlternativa(letra)}
+                  className={`w-full p-4 rounded-xl border text-left transition-all flex items-start gap-3 text-xs sm:text-sm cursor-pointer ${estiloCard}`}
+                >
+                  <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-300 font-bold flex items-center justify-center shrink-0 text-slate-700">
+                    {letra}
+                  </span>
+                  <span className="flex-1">{questaoAtiva.alternativas[letra]}</span>
+                  {mostrarFeedback && ehCorreta && (
+                    <CheckCircle2 className="w-5 h-5 text-[#00733f] shrink-0" />
+                  )}
+                  {mostrarFeedback && selecionada && !ehCorreta && (
+                    <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-                    {revelarResultado && ehCorreta && (
-                      <CheckCircle2 className="w-5 h-5 text-[#00733f] shrink-0" />
-                    )}
-                    {revelarResultado && foiEscolhida && !ehCorreta && (
-                      <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Gabarito Comentado (se Modo Estudo ou após resposta) */}
-            {modoEstudo && mostrarGabaritoAtual && (
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                <div className="flex items-center gap-2 font-bold text-sm text-[#002752]">
-                  <BookOpen className="w-4 h-4 text-[#ebc000]" />
-                  <span>Gabarito Comentado Oficial (Alternativa {questaoAtiva.resposta_correta})</span>
-                </div>
-                <p className="text-slate-700 leading-relaxed">
-                  {questaoAtiva.justificativa}
-                </p>
-                {questaoAtiva.referencia_bibliografica && (
-                  <div className="pt-2 border-t border-slate-200 text-[11px] text-slate-500 flex items-center justify-between flex-wrap gap-2">
-                    <span><strong>Fonte Bibliográfica:</strong> {questaoAtiva.referencia_bibliografica}</span>
-                    <a
-                      href={GOOGLE_DRIVE_REPO}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#002752] font-semibold hover:underline"
-                    >
-                      Acessar texto no Drive ↗
-                    </a>
-                  </div>
-                )}
+          {/* Feedback section if study mode and answered */}
+          {mostrarGabaritoAtual && modoEstudo && (
+            <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 text-xs space-y-2">
+              <div className="flex items-center gap-2 font-bold text-[#002752]">
+                <Sparkles className="w-4 h-4 text-[#ebc000]" />
+                Justificativa Teórica & Bibliográfica:
               </div>
-            )}
+              <p className="text-slate-700 leading-relaxed">{questaoAtiva.justificativa}</p>
+              {questaoAtiva.referencia_bibliografica && (
+                <div className="pt-2 border-t border-amber-200/60 text-[11px] text-slate-500 italic">
+                  Referência: {questaoAtiva.referencia_bibliografica}
+                </div>
+              )}
+            </div>
+          )}
 
-            {/* Navigation buttons */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+          {/* Navigation Controls */}
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
+            <button
+              onClick={questaoAnterior}
+              disabled={indiceAtual === 0}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Anterior
+            </button>
+
+            <div className="flex items-center gap-2">
               <button
-                onClick={questaoAnterior}
-                disabled={indiceAtual === 0}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={finalizarSimulado}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer"
               >
-                <ArrowLeft className="w-4 h-4" />
-                Anterior
+                Encerrar Simulado
               </button>
 
-              <div className="flex items-center gap-2">
-                {indiceAtual < questoesAtuais.length - 1 ? (
-                  <button
-                    onClick={proximaQuestao}
-                    className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold bg-[#002752] text-white hover:bg-[#001c3d] transition-colors shadow-xs"
-                  >
-                    Próxima Questão
-                    <ArrowRight className="w-4 h-4 text-[#ebc000]" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={finalizarSimulado}
-                    className="flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-extrabold bg-[#00733f] text-white hover:bg-emerald-700 transition-colors shadow-md"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-[#ebc000]" />
-                    Finalizar Simulado
-                  </button>
-                )}
-              </div>
+              <button
+                onClick={proximaQuestao}
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#002752] hover:bg-[#001c3d] text-white font-bold cursor-pointer"
+              >
+                {indiceAtual === questoesAtuais.length - 1 ? 'Finalizar' : 'Próxima'}
+                <ArrowRight className="w-4 h-4 text-[#ebc000]" />
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Screen 3: Relatório Final de Desempenho */}
+      {/* Screen 3: Resultado do Simulado Concluído */}
       {simuladoFinalizado && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
-          <div className="text-center max-w-lg mx-auto space-y-2">
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-[#00733f]">
-              Simulado Concluído com Sucesso!
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+          <div className="text-center space-y-2 border-b border-slate-100 pb-6">
+            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-[#00733f]">
+              Simulado Concluído com Sucesso
             </span>
-            <h3 className="text-2xl font-black font-serif text-[#002752]">
-              Seu Desempenho na Avaliação
+            <h3 className="text-2xl sm:text-3xl font-serif font-black text-[#002752]">
+              Relatório de Desempenho
             </h3>
-            <p className="text-xs text-slate-500">
-              Tempo total gasto: {Math.floor(resultado.tempoGastoSegundos / 60)}m {resultado.tempoGastoSegundos % 60}s
+            <p className="text-xs text-slate-600 max-w-lg mx-auto">
+              {salvoNoBanco ? (
+                <span className="text-[#00733f] font-semibold flex items-center justify-center gap-1">
+                  <Check className="w-4 h-4" />
+                  Resultado persistido no banco de dados da disciplina e sincronizado com o painel do professor!
+                </span>
+              ) : (
+                'Confira os detalhes das questões respondidas e seu gabarito comentado.'
+              )}
             </p>
           </div>
 
-          {/* Score cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-              <span className="text-xs text-slate-500 uppercase font-semibold block">Nota Final</span>
-              <span className="text-3xl font-black text-[#002752] font-mono mt-1 block">
-                {resultado.nota.toFixed(1)} <span className="text-sm font-normal text-slate-400">/ 10</span>
+          {/* Metric cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200 text-center">
+              <span className="text-xs text-blue-800 uppercase font-semibold block">Nota Final</span>
+              <span className="text-3xl font-black text-[#002752] mt-1 block">
+                {resultado.nota.toFixed(1)}
               </span>
+              <span className="text-[11px] text-slate-500">escala de 0 a 10</span>
             </div>
 
             <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
-              <span className="text-xs text-emerald-800 uppercase font-semibold block">Taxa de Acertos</span>
-              <span className="text-3xl font-black text-[#00733f] font-mono mt-1 block">
-                {resultado.acertos} <span className="text-sm font-normal text-emerald-700">/ {resultado.total}</span>
+              <span className="text-xs text-emerald-800 uppercase font-semibold block">Total de Acertos</span>
+              <span className="text-3xl font-black text-[#00733f] mt-1 block">
+                {resultado.acertos} / {resultado.total}
               </span>
-              <span className="text-[11px] text-emerald-700 font-bold">
-                {((resultado.acertos / resultado.total) * 100).toFixed(0)}%
+              <span className="text-[11px] text-slate-500">
+                {((resultado.acertos / (resultado.total || 1)) * 100).toFixed(0)}% de acerto
+              </span>
+            </div>
+
+            <div className="p-4 bg-purple-50 rounded-xl border border-purple-200 text-center">
+              <span className="text-xs text-purple-800 uppercase font-semibold block">Tempo Decorrido</span>
+              <span className="text-2xl font-black text-purple-950 mt-1 block">
+                {formatarTempo(resultado.tempoGastoSegundos)}
+              </span>
+              <span className="text-[11px] text-slate-500">
+                méd: {(resultado.tempoGastoSegundos / (resultado.total || 1)).toFixed(0)}s / questão
               </span>
             </div>
 
             <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 text-center">
-              <span className="text-xs text-amber-800 uppercase font-semibold block">Nível de Domínio</span>
+              <span className="text-xs text-amber-800 uppercase font-semibold block">Diagnóstico</span>
               <span className="text-lg font-black text-amber-900 mt-2 block">
                 {resultado.nota >= 8 ? 'Excelente' : resultado.nota >= 6 ? 'Satisfatório' : 'Necessita Revisão'}
               </span>
@@ -603,7 +605,7 @@ export const SimuladoComponent: React.FC = () => {
                   <div key={q.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-3 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-slate-800">
-                        Questão {idx + 1} ({q.id}) • Aula {q.aula_relacionada} ({q.dificuldade})
+                        Questão {idx + 1} ({q.id}) • Unidade {q.unidade} • Aula {q.aula_relacionada} ({q.dificuldade})
                       </span>
                       <span className={`px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 ${
                         acertou ? 'bg-emerald-100 text-[#00733f]' : 'bg-rose-100 text-rose-700'
@@ -641,10 +643,29 @@ export const SimuladoComponent: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex justify-center pt-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+            <button
+              onClick={() => {
+                exportarProvaParaPDF({
+                  titulo: `Simulado de Revisão - ${usuario?.nome || 'Discente'}`,
+                  questoes: questoesAtuais,
+                  unidadesSelecionadas: unidadeFiltro !== 'Todas' ? [Number(unidadeFiltro)] : [],
+                  dificuldadeEscolhida: dificuldadeFiltro,
+                  incluirGabarito: true,
+                  incluirJustificativas: true,
+                  professorNome: 'Prof. Dr. Ricardo Arvate'
+                });
+              }}
+              className="flex items-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 text-[#002752] border border-slate-300 rounded-xl font-bold text-xs shadow-xs transition-colors cursor-pointer"
+              title="Baixar a prova do simulado e seu gabarito em PDF"
+            >
+              <FileDown className="w-4 h-4 text-[#ebc000]" />
+              Exportar Prova em PDF
+            </button>
+
             <button
               onClick={reiniciar}
-              className="flex items-center gap-2 px-6 py-3 bg-[#002752] hover:bg-[#001c3d] text-white rounded-xl font-bold text-xs shadow-md transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-[#002752] hover:bg-[#001c3d] text-white rounded-xl font-bold text-xs shadow-md transition-colors cursor-pointer"
             >
               <RotateCcw className="w-4 h-4 text-[#ebc000]" />
               Fazer Novo Simulado
