@@ -38,7 +38,7 @@ export const UNIDADES_CURRICULARES: UnidadeCurricular[] = [
     ],
     aulasRelacionadas: [1, 2],
     avaliacaoRelacionada: '1ª Avaliação (P1 - Aulas 1 a 4)',
-    simuladores: ['edgeworth'],
+    simuladores: ['musgrave', 'edgeworth', 'social_welfare', 'ricardian', 'welfare_frontier'],
     competencias: [
       'Compreender as matrizes teóricas do mercantilismo, liberalismo clássico e keynesianismo',
       'Distinguir com precisão micro e macroeconômica as funções Alocativa, Distributiva e Estabilizadora',
@@ -93,7 +93,7 @@ export const UNIDADES_CURRICULARES: UnidadeCurricular[] = [
     ],
     aulasRelacionadas: [3, 4, 5],
     avaliacaoRelacionada: '1ª e 2ª Avaliação (P1: Aulas 3-4 | P2: Aula 5)',
-    simuladores: ['coase', 'monopolio', 'samuelson'],
+    simuladores: ['coase', 'pigou', 'samuelson', 'monopoly', 'asymmetric_info'],
     competencias: [
       'Modelar a condição de Samuelson (ΣTMS = TMT) para oferta ótima de bens públicos',
       'Analisar a matriz de rivalidade e excludibilidade (bens puros, comuns, clube e privados)',
@@ -147,7 +147,7 @@ export const UNIDADES_CURRICULARES: UnidadeCurricular[] = [
     ],
     aulasRelacionadas: [9, 10],
     avaliacaoRelacionada: '3ª Avaliação (P3 - Aulas 9 a 12)',
-    simuladores: ['niskanen', 'arrow'],
+    simuladores: ['downs', 'arrow', 'niskanen', 'logrolling', 'rent_seeking'],
     competencias: [
       'Identificar as causas estruturais das falhas de governo (assimetria, captura e rent-seeking)',
       'Formular o modelo de Niskanen onde o burocrata busca o ponto de orçamento máximo (BT=CT)',
@@ -214,7 +214,7 @@ export const UNIDADES_CURRICULARES: UnidadeCurricular[] = [
     ],
     aulasRelacionadas: [6, 7, 8],
     avaliacaoRelacionada: '2ª Avaliação (P2 - Aulas 5 a 8)',
-    simuladores: ['harberger', 'ramsey', 'laffer'],
+    simuladores: ['tax_incidence', 'harberger', 'ramsey', 'laffer', 'reforma_tributaria'],
     competencias: [
       'Calcular e ilustrar graficamente o peso morto de Harberger: DW = 0.5 * η * t² * P0 * Q0',
       'Distinguir a incidência jurídica da incidência econômica baseada nas elasticidades-preço relativas',
@@ -269,7 +269,7 @@ export const UNIDADES_CURRICULARES: UnidadeCurricular[] = [
     ],
     aulasRelacionadas: [11, 12],
     avaliacaoRelacionada: '3ª Avaliação (P3 - Aulas 9 a 12)',
-    simuladores: ['tiebout', 'federalismo'],
+    simuladores: ['oates', 'tiebout', 'federalism', 'fiscal_war', 'lrf_engine'],
     competencias: [
       'Modelar a superioridade de bem-estar da descentralização sob preferências regionais heterogêneas (Oates)',
       'Avaliar as hipóteses do modelo de Tiebout de mobilidade interjurisdicional e provisão local de bens',

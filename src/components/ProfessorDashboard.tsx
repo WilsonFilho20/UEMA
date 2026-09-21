@@ -21,7 +21,11 @@ import {
   Check,
   Save,
   HelpCircle,
-  Filter
+  Filter,
+  Eye,
+  X,
+  TrendingUp,
+  BookCheck
 } from 'lucide-react';
 import {
   BarChart,
@@ -46,10 +50,12 @@ import {
 } from '../services/firestoreDataService';
 import { authService } from '../services/authService';
 import { exportarProvaParaPDF } from '../utils/pdfExportService';
+import { PedagogicalDashboardView } from './PedagogicalDashboardView';
+import { ProfessorLessonsCatalog } from './ProfessorLessonsCatalog';
 
 export const ProfessorDashboard: React.FC = () => {
   // Navigation tabs within Professor Dashboard
-  const [abaDocente, setAbaDocente] = useState<'visao_geral' | 'calendario' | 'gerador' | 'alunos' | 'historico_provas'>('visao_geral');
+  const [abaDocente, setAbaDocente] = useState<'visao_geral' | 'relacao_aulas' | 'pedagogico' | 'calendario' | 'gerador' | 'alunos' | 'historico_provas'>('visao_geral');
 
   // Real data state from Firestore
   const [simuladosTurma, setSimuladosTurma] = useState<RegistroSimuladoFirestore[]>([]);
@@ -132,7 +138,7 @@ export const ProfessorDashboard: React.FC = () => {
       // Mapear questões mais erradas
       if (sim.errosQuestoesIds && Array.isArray(sim.errosQuestoesIds)) {
         sim.errosQuestoesIds.forEach((qId) => {
-          const questao = QUESTOES_BANCO.find((q) => q.id === qId);
+          const questao = BANCO_COMPLETO_1000_QUESTOES.find((q) => q.id === qId) || QUESTOES_BANCO.find((q) => q.id === qId);
           if (questao && mapaUnidades[questao.unidade]) {
             mapaUnidades[questao.unidade].errosQuestoes[qId] =
               (mapaUnidades[questao.unidade].errosQuestoes[qId] || 0) + 1;
@@ -369,6 +375,8 @@ export const ProfessorDashboard: React.FC = () => {
       acertos: number;
       notas: number[];
       ultimoSimulado: string;
+      historicoSimulados: RegistroSimuladoFirestore[];
+      detalhesPorUnidade: Record<number, { acertos: number; total: number }>;
     }> = {};
 
     simuladosTurma.forEach((s) => {
@@ -381,13 +389,33 @@ export const ProfessorDashboard: React.FC = () => {
           questoesRespondidas: 0,
           acertos: 0,
           notas: [],
-          ultimoSimulado: s.data
+          ultimoSimulado: s.data,
+          historicoSimulados: [],
+          detalhesPorUnidade: {
+            1: { acertos: 0, total: 0 },
+            2: { acertos: 0, total: 0 },
+            3: { acertos: 0, total: 0 },
+            4: { acertos: 0, total: 0 },
+            5: { acertos: 0, total: 0 }
+          }
         };
       }
       mapaAlunos[s.alunoId].totalSimulados++;
       mapaAlunos[s.alunoId].questoesRespondidas += s.total;
       mapaAlunos[s.alunoId].acertos += s.acertos;
       mapaAlunos[s.alunoId].notas.push(s.nota);
+      mapaAlunos[s.alunoId].historicoSimulados.push(s);
+
+      if (s.detalhesPorUnidade) {
+        Object.entries(s.detalhesPorUnidade).forEach(([uStr, val]) => {
+          const uNum = Number(uStr);
+          const v = val as { acertos?: number; total?: number } | undefined;
+          if (mapaAlunos[s.alunoId].detalhesPorUnidade[uNum] && v) {
+            mapaAlunos[s.alunoId].detalhesPorUnidade[uNum].acertos += (v.acertos || 0);
+            mapaAlunos[s.alunoId].detalhesPorUnidade[uNum].total += (v.total || 0);
+          }
+        });
+      }
     });
 
     const lista = Object.values(mapaAlunos).map((aluno) => {
@@ -511,8 +539,32 @@ export const ProfessorDashboard: React.FC = () => {
               : 'text-slate-700 hover:bg-white/70'
           }`}
         >
-          <BrainCircuit className="w-4 h-4" />
+          <BarChart className="w-4 h-4" />
           Visão Geral & Indicadores
+        </button>
+
+        <button
+          onClick={() => setAbaDocente('relacao_aulas')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            abaDocente === 'relacao_aulas'
+              ? 'bg-[#002752] text-white shadow-xs'
+              : 'text-slate-700 hover:bg-white/70'
+          }`}
+        >
+          <BookOpen className="w-4 h-4 text-[#ebc000]" />
+          Relação Detalhada de Aulas (12)
+        </button>
+
+        <button
+          onClick={() => setAbaDocente('pedagogico')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            abaDocente === 'pedagogico'
+              ? 'bg-[#002752] text-white shadow-xs'
+              : 'text-slate-700 hover:bg-white/70'
+          }`}
+        >
+          <BrainCircuit className="w-4 h-4 text-[#ebc000]" />
+          Dashboard Pedagógico & Perfis dos Alunos
         </button>
 
         <button
@@ -524,7 +576,7 @@ export const ProfessorDashboard: React.FC = () => {
           }`}
         >
           <Sparkles className="w-4 h-4 text-[#ebc000]" />
-          Gerador de Provas Inteligente (Banco de 1.000 Questões)
+          Gerador de Provas Adaptativo (Banco de 2.000 Questões)
         </button>
 
         <button
@@ -564,11 +616,28 @@ export const ProfessorDashboard: React.FC = () => {
         </button>
       </div>
 
+      {/* Dashboard Pedagógico & Perfis */}
+      {abaDocente === 'pedagogico' && (
+        <PedagogicalDashboardView modo="docente" />
+      )}
+
       {/* Calendário Docente */}
       {abaDocente === 'calendario' && (
         <AcademicCalendarView
           modo="docente"
           onNavigateToQuiz={() => {
+            setAbaDocente('gerador');
+          }}
+        />
+      )}
+
+      {/* Relação Completa de Aulas Detalhadas por Conteúdo */}
+      {abaDocente === 'relacao_aulas' && (
+        <ProfessorLessonsCatalog
+          simuladosTurma={simuladosTurma}
+          onCriarProvaParaAula={(aulaNum, unidadeNum) => {
+            setUnidadesSelecionadas([unidadeNum]);
+            setProvaTitulo(`Avaliação Oficial - Aula ${aulaNum.toString().padStart(2, '0')}: Finanças Públicas (UEMA)`);
             setAbaDocente('gerador');
           }}
         />
@@ -786,7 +855,7 @@ export const ProfessorDashboard: React.FC = () => {
                     >
                       <span className={`w-2 h-2 rounded-full ${isChecked ? 'bg-[#ebc000]' : 'bg-slate-300'}`} />
                       <span>{top.nome}</span>
-                      <span className="text-[10px] opacity-75 font-normal">({top.subtopicos.length} eixos)</span>
+                      <span className="text-[10px] opacity-75 font-normal">(Aula {top.aulaNumero})</span>
                     </button>
                   );
                 })}
@@ -1006,6 +1075,7 @@ export const ProfessorDashboard: React.FC = () => {
                     <th className="py-3 px-4">Média de Notas</th>
                     <th className="py-3 px-4">Taxa de Acerto</th>
                     <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-center">Perfil Pedagógico</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -1032,6 +1102,16 @@ export const ProfessorDashboard: React.FC = () => {
                         }`}>
                           {aluno.statusRisco}
                         </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          onClick={() => setAlunoSelecionado(aluno)}
+                          className="px-3 py-1.5 bg-[#002752] text-white hover:bg-[#001c3d] rounded-lg text-xs font-bold flex items-center gap-1.5 mx-auto transition-transform hover:scale-105 cursor-pointer shadow-xs"
+                          title="Abrir Diagnóstico Individual do Aluno"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-[#ebc000]" />
+                          Ver Perfil
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -1277,6 +1357,174 @@ export const ProfessorDashboard: React.FC = () => {
                 className="px-4 py-2 bg-[#002752] text-white rounded-xl text-xs font-semibold cursor-pointer"
               >
                 Concluir Visualização
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Perfil Pedagógico Individual do Aluno */}
+      {alunoSelecionado && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200">
+            {/* Cabeçalho */}
+            <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-[#002752] text-white rounded-t-2xl">
+              <div>
+                <span className="text-[11px] font-bold text-[#ebc000] uppercase tracking-wider block">
+                  Perfil Pedagógico & Desempenho Individual
+                </span>
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5 text-[#ebc000]" />
+                  {alunoSelecionado.nome}
+                </h3>
+                <span className="text-xs text-slate-300 font-mono">
+                  Matrícula: {alunoSelecionado.matricula} • ID: {alunoSelecionado.id}
+                </span>
+              </div>
+              <button
+                onClick={() => setAlunoSelecionado(null)}
+                className="p-1.5 hover:bg-white/20 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Conteúdo com Scroll */}
+            <div className="p-6 overflow-y-auto space-y-6">
+              {/* Cards de Métricas Principais */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="text-[11px] font-semibold text-slate-500 block">Média de Notas</span>
+                  <div className="flex items-baseline gap-1 mt-1">
+                    <span className={`text-2xl font-black font-mono ${
+                      alunoSelecionado.mediaSimulados >= 7 ? 'text-emerald-700' : 'text-amber-700'
+                    }`}>
+                      {alunoSelecionado.mediaSimulados.toFixed(1)}
+                    </span>
+                    <span className="text-xs text-slate-400">/ 10</span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="text-[11px] font-semibold text-slate-500 block">Taxa de Acerto</span>
+                  <div className="flex items-baseline gap-1 mt-1">
+                    <span className="text-2xl font-black font-mono text-[#002752]">
+                      {alunoSelecionado.taxaAcerto}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="text-[11px] font-semibold text-slate-500 block">Simulados Feitos</span>
+                  <div className="flex items-baseline gap-1 mt-1">
+                    <span className="text-2xl font-black font-mono text-slate-800">
+                      {alunoSelecionado.totalSimulados}
+                    </span>
+                    <span className="text-xs text-slate-400">({alunoSelecionado.questoesRespondidas} questões)</span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="text-[11px] font-semibold text-slate-500 block">Status de Risco</span>
+                  <div className="mt-1">
+                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${
+                      alunoSelecionado.statusRisco === 'Estável'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : alunoSelecionado.statusRisco === 'Atenção'
+                        ? 'bg-amber-100 text-amber-900'
+                        : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {alunoSelecionado.statusRisco}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Diagnóstico por Unidade Curricular */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-sm text-[#002752] flex items-center gap-2">
+                  <BrainCircuit className="w-4 h-4 text-[#00733f]" />
+                  Domínio por Unidade Curricular (Ementa de 60h)
+                </h4>
+                <div className="space-y-2">
+                  {[1, 2, 3, 4, 5].map((uNum) => {
+                    const uInfo = UNIDADES_CURRICULARES.find((u) => u.numero === uNum);
+                    const stats = alunoSelecionado.detalhesPorUnidade?.[uNum] || { acertos: 0, total: 0 };
+                    const taxaU = stats.total > 0 ? Math.round((stats.acertos / stats.total) * 100) : 0;
+                    return (
+                      <div key={uNum} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-800">
+                            Unidade {uNum}: {uInfo?.titulo}
+                          </span>
+                          <span className="font-mono font-bold text-slate-600">
+                            {stats.acertos}/{stats.total} acertos ({taxaU}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all rounded-full ${
+                              taxaU >= 75 ? 'bg-emerald-600' : taxaU >= 60 ? 'bg-amber-500' : 'bg-rose-500'
+                            }`}
+                            style={{ width: `${stats.total > 0 ? taxaU : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Histórico dos Simulados Submetidos */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-sm text-[#002752] flex items-center gap-2">
+                  <History className="w-4 h-4 text-[#ebc000]" />
+                  Histórico de Sessões de Estudo & Simulados
+                </h4>
+                {(!alunoSelecionado.historicoSimulados || alunoSelecionado.historicoSimulados.length === 0) ? (
+                  <p className="text-xs text-slate-500 italic">Nenhum simulado detalhado registrado ainda.</p>
+                ) : (
+                  <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden text-xs">
+                    {alunoSelecionado.historicoSimulados.map((sim: any, sIdx: number) => (
+                      <div key={sIdx} className="p-3 bg-white hover:bg-slate-50 flex items-center justify-between gap-4">
+                        <div>
+                          <div className="font-bold text-slate-800 flex items-center gap-2">
+                            <span>Sessão {sIdx + 1}</span>
+                            <span className="text-[10px] text-slate-400 font-normal">
+                              ({sim.data || new Date(sim.timestamp).toLocaleDateString('pt-BR')})
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-500">
+                            Unidade: {sim.unidadeFiltro === 'Todas' ? 'Geral (Todas)' : `Unidade ${sim.unidadeFiltro}`} • Dificuldade: {sim.dificuldade || 'Mista'}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className={`px-2 py-0.5 rounded font-black font-mono ${
+                            sim.nota >= 7 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                          }`}>
+                            Nota: {Number(sim.nota).toFixed(1)}
+                          </span>
+                          <span className="text-[11px] text-slate-500 block font-mono">
+                            {sim.acertos}/{sim.total} acertos
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Rodapé */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between rounded-b-2xl">
+              <span className="text-xs text-slate-500">
+                Última atividade: {alunoSelecionado.ultimoSimulado || 'Hoje'}
+              </span>
+              <button
+                onClick={() => setAlunoSelecionado(null)}
+                className="px-4 py-2 bg-[#002752] text-white hover:bg-[#001c3d] rounded-xl text-xs font-bold cursor-pointer transition-colors"
+              >
+                Fechar Perfil
               </button>
             </div>
           </div>

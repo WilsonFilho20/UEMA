@@ -1,6 +1,6 @@
 import { Questao } from '../types';
 
-export const GOOGLE_DRIVE_REPO = 'https://drive.google.com/drive/folders/1egAu3S9uHMBkXJftl-T4pI0g470GRpW3';
+export const GOOGLE_DRIVE_REPO = 'https://1drv.ms/f/c/560860ef5b82b0bf/IgB-al7Bl3WuRK5JTo07BVMpAd7tVh5KNk5A17-9_32Q4XU?e=Uke27d';
 
 export const QUESTOES_BANCO: Questao[] = [
   // ==========================================
@@ -289,3 +289,32 @@ export const DISTRIBUICAO_QUESTOES = [
   { nivel: 'Média-Alta', percentual: 15, descricao: 'Análise comparativa entre modelos, escolas e teoremas microeconômicos' },
   { nivel: 'Alta', percentual: 10, descricao: 'Problemas complexos de política pública, derivações formais e teoremas centrais' }
 ];
+
+export const UNIDADES_CURRICULARES = [
+  {
+    numero: 1,
+    titulo: 'Introdução e Falhas de Mercado (Funções do Governo, Bem-Estar e Eficiência)',
+    descricao: 'Aborda o papel do Estado na economia, as 3 funções de Musgrave, primeiro e segundo teoremas do bem-estar e falhas de mercado.'
+  },
+  {
+    numero: 2,
+    titulo: 'Provisão Pública de Bens e Soluções Governamentais (Bens Públicos e Monopólios Naturais)',
+    descricao: 'Análise microeconômica da rivalidade e excludibilidade, carona (free-rider), condição de Samuelson e regulação de monopólios.'
+  },
+  {
+    numero: 3,
+    titulo: 'Teoria da Escolha Pública e Tomada de Decisão Coletiva',
+    descricao: 'Mecanismos de votação, Teorema do Eleitor Mediano de Downs, Teorema da Impossibilidade de Arrow, rent-seeking e burocracia.'
+  },
+  {
+    numero: 4,
+    titulo: 'Teoria da Tributação (Incidência, Eficiência Econômica e Tributação Ótima)',
+    descricao: 'Incidência econômica vs legal, peso morto de Harberger, regra da elasticidade inversa de Ramsey e tributação ótima de renda de Mirrlees.'
+  },
+  {
+    numero: 5,
+    titulo: 'Federalismo Fiscal, Gastos Públicos e Orçamento no Brasil',
+    descricao: 'Descentralização fiscal, modelo de Tiebout, transferências intergovernamentais (FPE/FPM), efeito flypaper e LRF no Brasil.'
+  }
+];
+

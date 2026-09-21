@@ -101,6 +101,63 @@ export const TOPICOS_CATALOGO: TopicoInfo[] = [
     aulaNumero: 12,
     nome: 'Federalismo no Brasil, Efeito Flypaper e Guerra Fiscal',
     descricao: 'Fundos FPE/FPM, FUNDEB, Lei de Responsabilidade Fiscal e disputa interestadual de ICMS'
+  },
+  // Tópicos Complementares de Aprofundamento (Unidades 1 a 5)
+  {
+    id: 'T-13',
+    unidade: 1,
+    aulaNumero: 2,
+    nome: 'Equivalência Ricardiana e Restrição Intertemporal do Governo',
+    descricao: 'Modelo de Barro, neutralidade da dívida pública, impostos presentes vs futuros e solvência soberana'
+  },
+  {
+    id: 'T-14',
+    unidade: 1,
+    aulaNumero: 1,
+    nome: 'Bens de Mérito, Paternalismo e Teoria de Musgrave',
+    descricao: 'Preferências individuais, assimetria de informação, intervenção estatal e finanças ético-sociais'
+  },
+  {
+    id: 'T-15',
+    unidade: 2,
+    aulaNumero: 4,
+    nome: 'Regulação de Monopólios Naturais: RPI-X vs Custo do Serviço',
+    descricao: 'Eficiência produtiva, assimetria de informação regulatória, incentivos dinâmicos e taxa de retorno'
+  },
+  {
+    id: 'T-16',
+    unidade: 2,
+    aulaNumero: 5,
+    nome: 'Bens de Clube de Buchanan, Recursos Comuns e Preços de Lindahl',
+    descricao: 'Congestionamento, não-rivalidade parcial, precificação ótima de clubes e equilíbrio fiscal voluntário'
+  },
+  {
+    id: 'T-17',
+    unidade: 3,
+    aulaNumero: 9,
+    nome: 'Ciclos Político-Econômicos de Nordhaus e Ilusão Fiscal de Puviani',
+    descricao: 'Manipulação eleitoral de gastos públicos, curva de Phillips eleitoral e percepção enviesada da carga tributária'
+  },
+  {
+    id: 'T-18',
+    unidade: 4,
+    aulaNumero: 7,
+    nome: 'Reforma Tributária (EC 132/2023): Dual IVA (IBS/CBS) e Princípio do Destino',
+    descricao: 'Dual IVA, não-cumulatividade plena, tributação no destino, devolução cashback e transição federativa'
+  },
+  {
+    id: 'T-19',
+    unidade: 4,
+    aulaNumero: 8,
+    nome: 'Curva de Laffer e Teoria da Evasão Fiscal de Allingham-Sandmo',
+    descricao: 'Alíquotas ótimas de arrecadação, aversão ao risco, probabilidade de auditoria e penalidades'
+  },
+  {
+    id: 'T-20',
+    unidade: 5,
+    aulaNumero: 12,
+    nome: 'Lei de Responsabilidade Fiscal (LC 101/2000) e Novo Arcabouço (LC 200/2023)',
+    descricao: 'Metas fiscais, limites de despesa com pessoal, regra de ouro, travas de gastos reais (0,6% a 2,5%) e sanções'
   }
 ];
 
@@ -532,21 +589,218 @@ function construirBancoMilQuestoes(): Questao[] {
           referencia: 'Giambiagi & Além (2011, Cap. 12); Matias-Pereira (2018); LC 101/2000.'
         }
       ]
+    },
+    'T-13': {
+      enunciados: [
+        {
+          foco: 'Equivalência Ricardiana de Robert Barro',
+          dificuldade: 'Média-Alta',
+          textoBase: 'A Proposição da Equivalência Ricardiana, reformulada por Robert Barro (1974), sustenta que, sob agentes racionais com horizontes intergeracionais altruístas e mercados de capitais perfeitos:',
+          correta: 'D',
+          certa: 'O financiamento do déficit público por emissão de títulos de dívida tem o mesmo impacto macroeconômico sobre a demanda agregada que a cobrança imediata de impostos, pois as famílias poupam para pagar os tributos futuros.',
+          erradas: [
+            'A dívida pública atua sempre como multiplicador keynesiano infinito do investimento privado.',
+            'O governo pode zerar permanentemente a carga tributária mantendo a dívida em trajetória explosiva.',
+            'As taxas de juros nominais caem a zero de forma compulsória após qualquer corte de impostos.',
+            'A dívida emitida pelos estados é automaticamente convertida em ações ordinárias de empresas estatais.'
+          ],
+          justificativa: 'Barro (1974) demonstra que a escolha entre dívida e tributos presentes é neutra para o consumo, uma vez que a restrição orçamentária intertemporal dos indivíduos internaliza o pagamento futuro do serviço da dívida.',
+          referencia: 'Barro, R. (1974). Are Government Bonds Net Wealth?; Romer, D. (Advanced Macroeconomics, Cap. 12).'
+        },
+        {
+          foco: 'Restrição Orçamentária Intertemporal e Solvência',
+          dificuldade: 'Alta',
+          textoBase: 'Para assegurar a sustentabilidade da relação Dívida Pública / PIB no longo prazo, quando a taxa de juros real (r) supera a taxa de crescimento do PIB real (g), a teoria macrofiscal prescreve que o governo deve:',
+          correta: 'A',
+          certa: 'Gerar superávits primários estruturais suficientes para estabilizar a dinâmica da dívida, compensando o diferencial positivo (r - g) sobre o estoque preexistente.',
+          erradas: [
+            'Manter déficits primários sucessivos para estimular indefinidamente o consumo das famílias.',
+            'Revogar unilateralmente os limites de endividamento da Lei de Responsabilidade Fiscal.',
+            'Emitir moeda física sem lastro cambial até anular as dívidas contratuais do Tesouro.',
+            'Subsidiar indiscriminadamente as importações de bens intermediários de consumo durável.'
+          ],
+          justificativa: 'A equação fundamental da dinâmica da dívida: Δd = (r - g)d - s demonstra que se r > g, um superávit primário s > 0 é matematicamente indispensável para conter a trajetória de crescimento de d (Giambiagi & Além, 2011).',
+          referencia: 'Giambiagi & Além (2011, Cap. 7); Blanchard, O. (Macroeconomia).'
+        }
+      ]
+    },
+    'T-14': {
+      enunciados: [
+        {
+          foco: 'Bens de Mérito e Paternalismo Estatal',
+          dificuldade: 'Média',
+          textoBase: 'O conceito de "Bens de Mérito" (Merit Goods), formulado por Richard Musgrave (1959), justifica a intervenção governamental que se sobrepõe à soberania do consumidor quando:',
+          correta: 'C',
+          certa: 'A sociedade julga que determinados serviços essenciais (como educação básica, vacinação e saneamento) devem ser providos mesmo que as preferências individuais sob assimetria de informação subestimem sua importância.',
+          erradas: [
+            'O bem é caracterizado por rivalidade e excludibilidade estritas no setor de luxo.',
+            'A produção do insumo ocorre sob monopólio natural gerando lucros privados extraordinários.',
+            'O governo estabelece cotas de importação para proteger manufaturas têxteis locais.',
+            'Os consumidores possuem informação perfeita e racionalidade prospectiva plena.'
+          ],
+          justificativa: 'Musgrave (1959) introduziu os bens meritórios para situações em que o Estado decide intervir guiado por imperativos sociais e informacionais superiores às escolhas míopes individuais.',
+          referencia: 'Musgrave, R. (1959, p. 13-14); Matias-Pereira (2018, Cap. 3).'
+        }
+      ]
+    },
+    'T-15': {
+      enunciados: [
+        {
+          foco: 'Regulação por Preço-Teto (Price-Cap RPI-X)',
+          dificuldade: 'Média-Alta',
+          textoBase: 'No desenho regulatório de monopólios naturais de infraestrutura (energia, saneamento e telecomunicações), a regulação por Preço-Teto (Price-Cap / RPI - X) distingue-se da Regulação por Custo do Serviço (Cost of Service) porque:',
+          correta: 'B',
+          certa: 'Confere fortes incentivos à redução de custos operacionais à firma concessionária, que pode reter ganhos de produtividade temporários durante o ciclo tarifário antes da revisão periódica do fator X.',
+          erradas: [
+            'Garante o repasse automático de 100% de quaisquer ineficiências de gestão para a tarifa do usuário.',
+            'Estimula a sobrecapitalização ineficiente de ativos fixos conhecida como efeito Averch-Johnson.',
+            'Elimina completamente a necessidade de agências reguladoras no monitoramento setorial.',
+            'Obriga a concessionária a praticar preços iguais a zero no horário de pico de consumo.'
+          ],
+          justificativa: 'Littlechild (1983) propôs o RPI-X para superar a preguiça gerencial do custo do serviço (cost-plus), criando estímulos poderosos para produtividade e repassando ganhos no fator X na revisão tarifária (Viscusi et al., 2005).',
+          referencia: 'Littlechild, S. C. (1983); Viscusi, Harrington & Vernon (2005); Pires, A. K. (2012).'
+        }
+      ]
+    },
+    'T-16': {
+      enunciados: [
+        {
+          foco: 'Bens de Clube de James Buchanan',
+          dificuldade: 'Média',
+          textoBase: 'Na clássica tipologia de James M. Buchanan (1965), os "Bens de Clube" caracterizam-se por apresentar:',
+          correta: 'E',
+          certa: 'Excludibilidade viável (por meio de pedágios ou taxas de adesão) e não-rivalidade parcial no consumo, estando sujeitos a fenômenos de congestionamento a partir de determinado limiar de usuários.',
+          erradas: [
+            'Não-excludibilidade universal e rivalidade absoluta, como os cardumes em alto-mar.',
+            'Fornecimento exclusivo por empresas estatais federais sob regime de imunidade tributária.',
+            'Custo marginal estritamente nulo mesmo quando a capacidade física do ativo estiver 100% saturada.',
+            'Impossibilidade técnica de restringir o acesso a qualquer cidadão que se recuse a pagar.'
+          ],
+          justificativa: 'Buchanan (1965, "An Economic Theory of Clubs") demonstrou que bens com excludibilidade e congestionamento (pontes pedagiadas, clubes esportivos) admitem provisão privada e compartilhamento com tamanho ótimo de adesão.',
+          referencia: 'Buchanan, J. M. (1965). An Economic Theory of Clubs; Economica, 32(125).'
+        }
+      ]
+    },
+    'T-17': {
+      enunciados: [
+        {
+          foco: 'Ciclos Político-Econômicos de Nordhaus',
+          dificuldade: 'Média-Alta',
+          textoBase: 'O modelo clássico de Ciclo Político-Econômico Oportunista de William Nordhaus (1975) prevê que governantes com intenção de reeleição tendem a:',
+          correta: 'A',
+          certa: 'Expandir despesas correntes e inflar a atividade econômica nas vésperas das eleições, gerando custos de ajuste inflacionário e contenção fiscal impopular no período pós-eleitoral imediato.',
+          erradas: [
+            'Elevar substancialmente as alíquotas de tributos nos três meses que antecedem o pleito eleitoral.',
+            'Extinguir benefícios previdenciários e salários públicos no ano de encerramento do mandato.',
+            'Proibir qualquer execução orçamentária de investimentos públicos durante o ano de votação.',
+            'Manter trajetórias de política monetária e fiscal estritamente invariantes ao calendário eleitoral.'
+          ],
+          justificativa: 'Nordhaus (1975) modelou a assimetria temporal entre eleitores míopes e governantes estratégicos, gerando o clássico padrão de boom pré-eleitoral seguido de recessão/ajuste fiscal subsequente.',
+          referencia: 'Nordhaus, W. (1975). The Political Business Cycle; Alesina & Roubini (1997).'
+        }
+      ]
+    },
+    'T-18': {
+      enunciados: [
+        {
+          foco: 'Reforma Tributária (EC 132/2023) e o IVA Dual',
+          dificuldade: 'Média-Alta',
+          textoBase: 'A Emenda Constitucional nº 132/2023 instituiu no Brasil a Reforma Tributária sobre o Consumo com a criação do IVA Dual, composto pelo:',
+          correta: 'C',
+          certa: 'IBS (Imposto sobre Bens e Serviços), de competência compartilhada de estados e municípios, e a CBS (Contribuição sobre Bens e Serviços), de competência federal, ambos sob o princípio do destino e não-cumulatividade plena.',
+          erradas: [
+            'ICMS e ISS mantidos nos moldes atuais com ampliação da guerra fiscal interestadual.',
+            'Imposto Único sobre Transações Financeiras com alíquota fixa sobre qualquer movimentação bancária.',
+            'IPI e PIS/Cofins unificados sob exclusividade orçamentária dos municípios metropolitanos.',
+            'Tributo sobre exportações com cobrança obrigatória na origem de commodities agropecuárias.'
+          ],
+          justificativa: 'A EC 132/2023 extingue PIS, Cofins, IPI, ICMS e ISS, substituindo-os pelo IVA Dual (CBS federal + IBS subnacional) com cobrança estritamente no destino e crédito financeiro amplo (Appy et al., 2023).',
+          referencia: 'Constituição Federal de 1988 (Art. 156-A); EC 132/2023; Ministério da Fazenda (2023).'
+        },
+        {
+          foco: 'Princípio do Destino e Fim da Guerra Fiscal',
+          dificuldade: 'Alta',
+          textoBase: 'A migração definitiva para o Princípio do Destino preconizada na Reforma Tributária do Consumo visa essencialmente a:',
+          correta: 'D',
+          certa: 'Alocar a receita tributária no local onde ocorre o consumo efetivo do bem ou serviço, neutralizando os incentivos estaduais para a concessão predatória de benefícios na origem.',
+          erradas: [
+            'Garantir que os estados mais populosos concentrem toda a receita industrial da União.',
+            'Obrigar as indústrias a comercializarem bens apenas dentro do município onde possuem sede física.',
+            'Proibir a circulação de mercadorias entre as regiões Norte e Sul do território nacional.',
+            'Conceder subsídios creditícios proporcionais ao frete rodoviário de transporte coletivo.'
+          ],
+          justificativa: 'Na tributação no destino, o imposto pertence ao estado consumidor final. Isso torna inócuo qualquer estado conceder isenções para atrair fábricas com vistas a faturar imposto na venda externa (Varsano, 1996; EC 132/2023).',
+          referencia: 'Varsano, R. (1996); IPEA Texto para Discussão nº 2842 (2023); EC 132/2023.'
+        }
+      ]
+    },
+    'T-19': {
+      enunciados: [
+        {
+          foco: 'Modelo de Evasão Fiscal de Allingham e Sandmo',
+          dificuldade: 'Alta',
+          textoBase: 'No modelo microeconômico de evasão fiscal de Allingham & Sandmo (1972), baseado na teoria da escolha sob incerteza (Von Neumann-Morgenstern), a decisão do contribuinte sobre quanto declarar ao fisco depende crucialmente de:',
+          correta: 'B',
+          certa: 'Um equilíbrio entre o benefício marginal de reter renda sonegada e o custo esperado em termos da probabilidade de auditoria e do fator multiplicador de penalidade pecuniária aplicada pelo Fisco.',
+          erradas: [
+            'Um compromisso altruísta absoluto e incondicional com a sustentabilidade do setor público.',
+            'Uma taxa de juros fixada pelo Banco Central com paridade estrita na taxa de câmbio real.',
+            'Uma impossibilidade computacional de fiscalização em economias que utilizam notas fiscais eletrônicas.',
+            'Uma obrigação religiosa universal de pagamento de tributos indiretos sobre combustíveis fósseis.'
+          ],
+          justificativa: 'Allingham & Sandmo (1972) formalizaram que a evasão tributária é uma decisão de portfólio de risco: se o ganho da sonegação supera o risco ponderado de auditoria e multa, a sonegação tende a se expandir.',
+          referencia: 'Allingham, M. G. & Sandmo, A. (1972). Income tax evasion: a theoretical analysis. Journal of Public Economics, 1(3-4).'
+        }
+      ]
+    },
+    'T-20': {
+      enunciados: [
+        {
+          foco: 'Novo Arcabouço Fiscal (Lei Complementar nº 200/2023)',
+          dificuldade: 'Média-Alta',
+          textoBase: 'O Regime Fiscal Sustentável (Novo Arcabouço Fiscal - LC nº 200/2023), que substituiu o Teto de Gastos da EC nº 95/2016, estabelece como mecanismo fundamental de controle das despesas primárias da União:',
+          correta: 'E',
+          certa: 'A vinculação do crescimento real dos gastos a 70% do crescimento da receita primária realizada nos 12 meses anteriores, sujeito a uma banda rígida com piso real de 0,6% e teto real de 2,5% ao ano.',
+          erradas: [
+            'O congelamento nominal permanente de todas as despesas com saúde e educação superior.',
+            'A autorização irrestrita de endividamento externo sem necessidade de autorização do Senado Federal.',
+            'O indexador obrigatório baseado na variação do índice Dow Jones e do preço do barril de petróleo.',
+            'A conversão automática de qualquer déficit primário em confisco compulsório de depósitos bancários à vista.'
+          ],
+          justificativa: 'A LC 200/2023 combina meta de resultado primário com banda de tolerância e regra de despesa anticíclica que cresce entre 0,6% e 2,5% acima da inflação, atrelada à performance da receita arrecadada.',
+          referencia: 'Lei Complementar nº 200/2023; Ministério da Fazenda (2023); Nota Técnica IFI/Senado Federal.'
+        },
+        {
+          foco: 'Limites de Pessoal na LRF (LC nº 101/2000)',
+          dificuldade: 'Média',
+          textoBase: 'A Lei de Responsabilidade Fiscal (LC nº 101/2000) impõe limites rígidos para a Despesa Total com Pessoal (DTP) em relação à Receita Corrente Líquida (RCL). No âmbito dos Estados-membros, o limite global fixado pelo art. 19 é de:',
+          correta: 'A',
+          certa: '60% da RCL, repartidos em 49% para o Poder Executivo, 6% para o Poder Judiciário, 3% para o Legislativo (incluindo Tribunal de Contas) e 2% para o Ministério Público.',
+          erradas: [
+            '90% da RCL, sem qualquer divisão percentual entre os poderes e órgãos autônomos.',
+            '30% da RCL, devendo o restante ser obrigatoriamente investido em ações de bolsa de valores.',
+            '100% da arrecadação de royalties minerais e petrolíferos repassados pela Agência Nacional do Petróleo.',
+            '75% da RCL, sendo vedada qualquer contratação de professores e servidores de segurança pública.'
+          ],
+          justificativa: 'O art. 19 e art. 20 da LRF fixam o teto global de 60% para estados e municípios (no DF e União é 50%), repartindo percentuais específicos para cada poder com gatilhos de alerta e prudencial.',
+          referencia: 'Lei Complementar nº 101/2000 (Arts. 18 a 23); Matias-Pereira (2018, Cap. 8).'
+        }
+      ]
     }
   };
 
-  // Gerar deterministicamente as questões adicionais até totalizar 1.000 questões
-  // garantindo indexação consistente (Q-0016 até Q-1000)
+  // Gerar deterministicamente as questões adicionais até totalizar 2.000 questões
+  // garantindo indexação consistente (Q-0016 até Q-2000)
   let idContador = 16;
 
   TOPICOS_CATALOGO.forEach((topico) => {
     const templates = variaçõesPorTopico[topico.id]?.enunciados || [];
     if (templates.length === 0) return;
 
-    // Gerar cerca de 82 questões por tópico para totalizar 1.000 questões no banco
-    const questoesPorTopico = 82;
+    // Gerar cerca de 100 questões por tópico para totalizar mais de 2.000 questões no banco
+    const questoesPorTopico = 100;
 
-    for (let i = 0; i < questoesPorTopico && idContador <= 1000; i++) {
+    for (let i = 0; i < questoesPorTopico && idContador <= 2000; i++) {
       const template = templates[i % templates.length];
       const seq = Math.floor(i / templates.length) + 1;
 
@@ -609,5 +863,7 @@ function construirBancoMilQuestoes(): Questao[] {
   return bancoCompleto;
 }
 
-// Singleton do Banco de 1.000 Questões
-export const BANCO_COMPLETO_1000_QUESTOES: Questao[] = construirBancoMilQuestoes();
+// Singleton do Banco de 2.000 Questões
+export const BANCO_COMPLETO_QUESTOES: Questao[] = construirBancoMilQuestoes();
+export const BANCO_COMPLETO_1000_QUESTOES: Questao[] = BANCO_COMPLETO_QUESTOES;
+export const TOTAL_QUESTOES_BANCO = BANCO_COMPLETO_QUESTOES.length;

@@ -1,7 +1,7 @@
 import { Aula, ReferenciaDetalhada } from '../types';
 import { ZETTELKASTEN_CARDS } from './zettelkastenData';
 
-const GOOGLE_DRIVE_REPO = 'https://drive.google.com/drive/folders/1egAu3S9uHMBkXJftl-T4pI0g470GRpW3';
+const GOOGLE_DRIVE_REPO = 'https://1drv.ms/f/c/560860ef5b82b0bf/IgB-al7Bl3WuRK5JTo07BVMpAd7tVh5KNk5A17-9_32Q4XU?e=Uke27d';
 
 export const AULAS_CURSO: Aula[] = [
   // ==========================================

@@ -10,7 +10,9 @@ import {
   LogOut,
   UserCheck,
   TrendingUp,
-  LogIn
+  LogIn,
+  BrainCircuit,
+  Briefcase
 } from 'lucide-react';
 import { UsuarioAutenticado } from '../types';
 import { GOOGLE_DRIVE_REPO } from '../data/questionsData';
@@ -36,18 +38,21 @@ export const Navbar: React.FC<NavbarProps> = ({
     if (!usuarioAtual) {
       return [
         { id: 'aulas', rotulo: '12 Aulas Cronológicas', icone: BookOpen },
+        { id: 'casos', rotulo: 'Estudos de Caso (25)', icone: Briefcase },
         { id: 'calendario', rotulo: 'Calendário de Aulas', icone: Calendar },
         { id: 'simuladores', rotulo: 'Simuladores Interativos', icone: Cpu },
-        { id: 'simulado', rotulo: 'Banco de Questões', icone: Sliders }
+        { id: 'simulado', rotulo: 'Banco de 2.000 Questões', icone: Sliders }
       ];
     }
 
     if (usuarioAtual.papel === 'professor') {
       return [
         { id: 'aulas', rotulo: '12 Aulas Cronológicas', icone: BookOpen },
+        { id: 'casos', rotulo: 'Estudos de Caso (25)', icone: Briefcase },
         { id: 'calendario', rotulo: 'Calendário Acadêmico', icone: Calendar },
         { id: 'simuladores', rotulo: 'Simuladores Interativos', icone: Cpu },
-        { id: 'simulado', rotulo: 'Banco de 1.000 Questões', icone: Sliders },
+        { id: 'simulado', rotulo: 'Banco de 2.000 Questões', icone: Sliders },
+        { id: 'pedagogico', rotulo: 'Dashboard Pedagógico', icone: BrainCircuit },
         { id: 'professor', rotulo: 'Painel Docente (Gestão)', icone: GraduationCap },
         { id: 'database', rotulo: 'Esquema de Dados', icone: Database }
       ];
@@ -56,9 +61,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     // Aluno navigation: Focused purely on student learning, progress, and tests
     return [
       { id: 'aulas', rotulo: '12 Aulas Cronológicas', icone: BookOpen },
+      { id: 'casos', rotulo: 'Estudos de Caso (25)', icone: Briefcase },
       { id: 'calendario', rotulo: 'Calendário de Aulas', icone: Calendar },
       { id: 'simuladores', rotulo: 'Simuladores Interativos', icone: Cpu },
       { id: 'simulado', rotulo: 'Fazer Simulado', icone: Sliders },
+      { id: 'pedagogico', rotulo: 'Diagnóstico Pedagógico', icone: BrainCircuit },
       { id: 'meu_desempenho', rotulo: 'Meu Desempenho', icone: TrendingUp }
     ];
   };

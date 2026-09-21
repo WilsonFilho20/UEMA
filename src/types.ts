@@ -197,6 +197,63 @@ export interface UserProgressDocument {
   simuladoresExplorados: string[];
 }
 
+export interface PerguntaFixacaoCaso {
+  id: string;
+  pergunta: string;
+  opcoes: {
+    id: 'A' | 'B' | 'C' | 'D';
+    texto: string;
+    explicacao: string;
+  }[];
+  respostaCorreta: 'A' | 'B' | 'C' | 'D';
+  conceitoChave: string;
+}
+
+export interface GuiaSimulacaoCaso {
+  objetivoSimulacao: string;
+  instrucoesNoSimulador: string;
+  variaveisParaAjustar: {
+    parametro: string;
+    efeitoNoCaso: string;
+  }[];
+  cenariosMultiplasRespostas: {
+    cenario: string;
+    ajusteRecomendado: string;
+    respostaEsperada: string;
+    diagnosticoPoliticaPublica: string;
+  }[];
+  conclusaoEconomica: string;
+}
+
+export interface EstudoDeCaso {
+  id: string; // Ex: "CASO-U1-01"
+  unidadeNumero: number; // 1 a 5
+  numeroNaUnidade: number; // 1 a 5
+  titulo: string;
+  subtitulo: string;
+  ambito: 'Federal' | 'Estadual (Maranhão)' | 'Municipal' | 'Internacional/Comparado';
+  contextoEconomico: string; // Situação real/problema prático detalhado
+  dilemaFiscal: string; // Qual o conflito econômico a ser resolvido
+  teoriaAplicada: {
+    conceito: string;
+    autoresChave: string;
+    mecanismo: string;
+  };
+  dadosCenarios: {
+    indicador: string;
+    valor: string;
+    interpretacao: string;
+  }[];
+  perguntasFixacao: PerguntaFixacaoCaso[];
+  simuladorRecomendadoId?: string;
+  guiaSimulacao?: GuiaSimulacaoCaso;
+  leituraRecomendadaDrive: {
+    obra: string;
+    autor: string;
+    capitulo: string;
+  };
+}
+
 export interface UsuarioAutenticado {
   uid: string;
   nome: string;

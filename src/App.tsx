@@ -7,6 +7,8 @@ import { ProfessorDashboard } from './components/ProfessorDashboard';
 import { StudentDashboard } from './components/StudentDashboard';
 import { AcademicCalendarView } from './components/AcademicCalendarView';
 import { DatabaseSchemaView } from './components/DatabaseSchemaView';
+import { PedagogicalDashboardView } from './components/PedagogicalDashboardView';
+import { CaseStudiesHub } from './components/CaseStudiesHub';
 import { AuthView } from './components/AuthView';
 import { authService } from './services/authService';
 import { UsuarioAutenticado } from './types';
@@ -20,6 +22,8 @@ export default function App() {
   });
 
   const [tabAtiva, setTabAtiva] = useState<string>('aulas');
+  const [parametroSimulado, setParametroSimulado] = useState<{ aula?: number; unidade?: number } | null>(null);
+  const [parametroSimuladorId, setParametroSimuladorId] = useState<any>(undefined);
 
   // Monitorar autenticação do Firebase e sincronizar estado
   useEffect(() => {
@@ -111,8 +115,27 @@ export default function App() {
           <>
             {tabAtiva === 'aulas' && (
               <LessonsView
-                onOpenSimulator={() => setTabAtiva('simuladores')}
-                onOpenQuiz={() => setTabAtiva('simulado')}
+                onOpenSimulator={(simId?: string) => {
+                  if (simId) setParametroSimuladorId(simId);
+                  setTabAtiva('simuladores');
+                }}
+                onOpenQuiz={(aulaNumero?: number) => {
+                  if (aulaNumero) {
+                    setParametroSimulado({ aula: aulaNumero });
+                  } else {
+                    setParametroSimulado(null);
+                  }
+                  setTabAtiva('simulado');
+                }}
+              />
+            )}
+
+            {tabAtiva === 'casos' && (
+              <CaseStudiesHub
+                onNavigateToSimulator={(simId?: string) => {
+                  if (simId) setParametroSimuladorId(simId);
+                  setTabAtiva('simuladores');
+                }}
               />
             )}
 
@@ -120,22 +143,57 @@ export default function App() {
               <AcademicCalendarView
                 modo={usuarioAtual.papel === 'professor' ? 'docente' : 'aluno'}
                 onNavigateToLesson={() => setTabAtiva('aulas')}
-                onNavigateToSimulator={() => setTabAtiva('simuladores')}
-                onNavigateToQuiz={() => setTabAtiva('simulado')}
+                onNavigateToSimulator={(simId?: string) => {
+                  if (simId) setParametroSimuladorId(simId);
+                  setTabAtiva('simuladores');
+                }}
+                onNavigateToQuiz={(aulaNumero?: number) => {
+                  if (aulaNumero) {
+                    setParametroSimulado({ aula: aulaNumero });
+                  } else {
+                    setParametroSimulado(null);
+                  }
+                  setTabAtiva('simulado');
+                }}
               />
             )}
 
-            {tabAtiva === 'simuladores' && <SimulatorsHub />}
+            {tabAtiva === 'simuladores' && <SimulatorsHub initialSimulatorId={parametroSimuladorId} />}
 
-            {tabAtiva === 'simulado' && <SimuladoComponent />}
+            {tabAtiva === 'simulado' && (
+              <SimuladoComponent
+                aulaInicial={parametroSimulado?.aula ?? null}
+                unidadeInicial={parametroSimulado?.unidade ?? 'Todas'}
+                onNavigateToLessons={() => setTabAtiva('aulas')}
+                onNavigateToSimulators={(simId?: string) => {
+                  if (simId) setParametroSimuladorId(simId);
+                  setTabAtiva('simuladores');
+                }}
+              />
+            )}
 
             {tabAtiva === 'meu_desempenho' && usuarioAtual.papel === 'aluno' && (
               <StudentDashboard
                 usuario={usuarioAtual}
-                onNavigateToQuiz={() => setTabAtiva('simulado')}
+                onNavigateToQuiz={() => {
+                  setParametroSimulado(null);
+                  setTabAtiva('simulado');
+                }}
                 onNavigateToLessons={() => setTabAtiva('aulas')}
                 onNavigateToSimulators={() => setTabAtiva('simuladores')}
                 onNavigateToCalendar={() => setTabAtiva('calendario')}
+              />
+            )}
+
+            {tabAtiva === 'pedagogico' && (
+              <PedagogicalDashboardView
+                modo={usuarioAtual.papel === 'professor' ? 'docente' : 'aluno'}
+                usuarioAtual={usuarioAtual}
+                onNavigateToQuiz={() => {
+                  setParametroSimulado(null);
+                  setTabAtiva('simulado');
+                }}
+                onNavigateToLessons={() => setTabAtiva('aulas')}
               />
             )}
 

@@ -479,5 +479,177 @@ export const ZETTELKASTEN_CARDS: ZettelkastenCard[] = [
     conexoes: ['Z-01.03', 'Z-09.02', 'Z-12.01'],
     referenciaBibliografica: 'Brasil (Lei Complementar nº 101/2000 - LRF); Giambiagi & Além (2011, Cap. 13)',
     tags: ['#LRF', '#RigidezOrcamentaria', '#RCL', '#GestaoFiscalResponsavel']
+  },
+
+  // =========================================================================
+  // FICHAS EXPANDIDAS DE CONCEITOS ESTRUTURANTES (TOTALIZANDO 50 CONCEITOS)
+  // =========================================================================
+  {
+    id: 'Z-01.04',
+    aulaNumero: 1,
+    conceito: 'Lei de Wagner e a Elasticidade-Renda do Gasto Público',
+    teseCentral: 'À medida que a renda per capita de uma nação industrializada cresce, a proporção do gasto público em relação ao PIB expande-se a taxas ainda maiores (elasticidade-renda superior à unidade).',
+    fundamentacaoTeorica: 'Adolph Wagner (1890) postulou que a modernização econômica acarreta maior divisão do trabalho, complexidade jurídica e urbanização acelerada, demandando expansão contínua em regulação, infraestrutura e serviços educacionais e de seguridade social. A elasticidade-renda do setor público é maior que 1: η_G > 1.',
+    aplicabilidadePratica: 'No Brasil e no Maranhão nas últimas cinco décadas, a transição de uma economia eminentemente agrária para urbana e de serviços multiplicou a demanda orçamentária por saneamento básico, malha rodoviária e ensino técnico/superior.',
+    equacaoOuRegra: '\\eta_{G,Y} = \\frac{\\partial G / G}{\\partial Y / Y} > 1 \\implies \\frac{G}{PIB} \\uparrow \\text{com o desenvolvimento}',
+    conexoes: ['Z-01.01', 'Z-01.05', 'Z-09.04'],
+    referenciaBibliografica: 'Wagner (1890); Giambiagi & Além (2011, Cap. 1); Musgrave & Musgrave (1989)',
+    tags: ['#LeiDeWagner', '#CrescimentoDoEstado', '#ElasticidadeRenda', '#HistoriaEconomica']
+  },
+  {
+    id: 'Z-01.05',
+    aulaNumero: 1,
+    conceito: 'Efeito Deslocamento e Efeito Catraca (Peacock & Wiseman)',
+    teseCentral: 'Crises e choques exógenos severos elevam abruptamente a tolerância dos cidadãos à tributação; após a crise, o gasto público não retorna ao patamar anterior, consolidando-se num novo patamar estrutural mais elevado.',
+    fundamentacaoTeorica: 'Alan Peacock e Jack Wiseman (1961) desafiaram a visão puramente organicista de Wagner. Em tempos de paz, o teto de tolerância tributária da sociedade restringe os governantes. Em crises sanitárias, guerras ou depressões, os governos realizam um "deslocamento" (displacement effect) dos gastos e tributos. Findo o choque, novas obrigações burocráticas e direitos adquiridos impedem o recuo das despesas.',
+    aplicabilidadePratica: 'A resposta fiscal brasileira e maranhense à pandemia de COVID-19: os auxílios emergenciais e despesas hospitalares expandiram os orçamentos e criaram uma expectativa social permanente por transferências maiores de renda mínima.',
+    equacaoOuRegra: 'G_{p\\acute{o}s-choque} > G_{pr\\acute{e}-choque} \\quad (\\text{Catraca\\ Or\\c{c}ament\\acute{a}ria})',
+    conexoes: ['Z-01.01', 'Z-01.04', 'Z-09.02'],
+    referenciaBibliografica: 'Peacock & Wiseman (1961, The Growth of Public Expenditure in the UK); Giambiagi (2011)',
+    tags: ['#PeacockWiseman', '#EfeitoDeslocamento', '#EfeitoCatraca', '#CrisesFiscais']
+  },
+  {
+    id: 'Z-02.04',
+    aulaNumero: 2,
+    conceito: 'Bens Meritórios e Deméritos na Visão de Musgrave',
+    teseCentral: 'Bens meritórios são aqueles cuja provisão é incentivada pelo Estado com base em preferências sociais informadas que superam a miopia ou a falta de informação dos próprios indivíduos.',
+    fundamentacaoTeorica: 'Richard Musgrave (1959) introduziu o conceito de bens meritórios (ex: vacinação, educação básica, cinto de segurança) e bens de demérito (ex: cigarros, bebidas alcoólicas, jogos de azar). Trata-se de uma exceção fundamentada ao postulado da soberania irrestrita do consumidor, justificando subsídios, obrigatoriedade de consumo ou sobretaxação desincentivadora.',
+    aplicabilidadePratica: 'A vacinação infantil obrigatória no SUS e a gratuidade de livros didáticos nas escolas públicas maranhenses são clássicos bens meritórios; o imposto seletivo ("imposto do pecado") da EC 132/2023 sobre fumo e bebidas é o antídoto a bens de demérito.',
+    equacaoOuRegra: 'U_{Social}(Q_{m\\acute{e}rito}) > U_{Privada}(Q_{m\\acute{e}rito}) \\implies Subsidiar\\ ou\\ Obrigar',
+    conexoes: ['Z-02.01', 'Z-05.01', 'Z-07.03'],
+    referenciaBibliografica: 'Musgrave (1959, The Theory of Public Finance); Stiglitz & Rosengard (2016, Cap. 4)',
+    tags: ['#BensMeritorios', '#Paternalismo', '#Musgrave', '#SaudePublica', '#Educacao']
+  },
+  {
+    id: 'Z-02.05',
+    aulaNumero: 2,
+    conceito: 'Fronteira de Possibilidades de Utilidade e o Ponto de Bliss',
+    teseCentral: 'A eficiência de Pareto define apenas uma infinidade de combinações ótimas; para escolher uma única alocação socialmente ótima (Ponto de Bliss), a sociedade requer uma Função de Bem-Estar Social (SWF).',
+    fundamentacaoTeorica: 'A projeção da Curva de Contrato da Caixa de Edgeworth no plano cartesiano de utilidades (U_A x U_B) gera a Fronteira de Possibilidades de Utilidade (UPF). Bergson (1938) e Samuelson (1947) provaram que o ponto de máxima bem-estar coletivo (Ponto de Bliss) ocorre exclusivamente na tangência entre a UPF e a mais alta curva de indiferença social.',
+    aplicabilidadePratica: 'Ilustra por que decisões orçamentárias do PPA e da LOA não podem ser puramente tecnocráticas: escolher entre gastar R$ 100 milhões no ensino infantil ou no agronegócio de exportação exige um juízo político explícito de prioridade distributiva.',
+    equacaoOuRegra: '\\max W(U_A, U_B) \\quad \\text{s.a.} \\quad \\Phi(U_A, U_B) = 0 \\implies TMS_{Social} = TMT_{UPF}',
+    conexoes: ['Z-02.02', 'Z-02.03', 'Z-10.02'],
+    referenciaBibliografica: 'Bergson (1938); Samuelson (1947, Foundations of Economic Analysis); Sanson (2011)',
+    tags: ['#PontoDeBliss', '#UPF', '#BergsonSamuelson', '#EconomiaDoBemEstar']
+  },
+  {
+    id: 'Z-03.04',
+    aulaNumero: 3,
+    conceito: 'Hipótese do Duplo Dividendo da Tributação Ambiental',
+    teseCentral: 'A cobrança de tributos pigouvianos sobre atividades poluentes produz dois ganhos simultâneos: melhora a qualidade ambiental (1º dividendo) e arrecada receitas para desonerar tributos distorcivos sobre trabalho e investimento (2º dividendo).',
+    fundamentacaoTeorica: 'Formulada por David Pearce (1991) e Lawrence Goulder (1995), a hipótese do duplo dividendo argumenta que a receita de taxas de carbono e multas ecológicas permite ao governo reduzir a perda de peso morto decorrente da incidência do imposto sobre a renda da pessoa física ou folha de pagamentos, gerando ganho líquido macroeconômico.',
+    aplicabilidadePratica: 'No Maranhão, a aplicação de royalties e taxas ecológicas sobre exploração mineral e portuária para financiar a redução de taxas cadastrais de microempreendedores locais e desonerações no agronegócio sustentável.',
+    equacaoOuRegra: 'Ganho_{L\\acute{i}quido} = \\Delta Qualidade_{Ambiental} + \\Delta Efici\\hat{e}ncia_{Tribut\\acute{a}ria} (\\downarrow t_{trabalho})',
+    conexoes: ['Z-03.03', 'Z-06.01', 'Z-07.03'],
+    referenciaBibliografica: 'Pearce (1991); Goulder (1995, Environmental and Energy Economics); Stiglitz (2016)',
+    tags: ['#DuploDividendo', '#TributacaoVerde', '#Pigou', '#Sustentabilidade']
+  },
+  {
+    id: 'Z-04.04',
+    aulaNumero: 4,
+    conceito: 'Tarifação em Duas Partes e Regulação de Coase-Hotelling',
+    teseCentral: 'Em monopólios naturais com custos médios decrescentes, a cobrança de uma tarifa em duas partes (tarifa fixa de acesso + tarifa variável igual ao custo marginal) concilia eficiência alocativa com equilíbrio financeiro.',
+    fundamentacaoTeorica: 'Ronald Coase (1946) e Harold Hotelling (1938) propuseram a tarifa bipartida. Como P = CMg geraria prejuízo operacional à concessionária, o componente variável é fixado em P = CMg (assegurando que o usuário decida consumir até o ponto onde BMg = CMg), enquanto uma taxa fixa de disponibilidade (assinatura mensal) rateia os custos fixos da infraestrutura.',
+    aplicabilidadePratica: 'O modelo de contas de energia elétrica da Equatorial Maranhão e de água tratada da CAEMA: o consumidor paga uma taxa de disponibilidade fixa de conexão à rede e uma tarifa por quilowatt-hora ou metro cúbico consumido.',
+    equacaoOuRegra: 'Tarifa_{Total} = Taxa\\ Fixa (F / N) + P_{CMg} \\times Q',
+    conexoes: ['Z-04.01', 'Z-04.02', 'Z-02.03'],
+    referenciaBibliografica: 'Coase (1946, The Marginal Cost Controversy); Viscusi et al. (Economics of Regulation)',
+    tags: ['#TarifaEmDuasPartes', '#MonopolioNatural', '#Coase', '#Regulacao']
+  },
+  {
+    id: 'Z-05.04',
+    aulaNumero: 5,
+    conceito: 'O Equilíbrio de Lindahl e a Troca Voluntária por Bens Públicos',
+    teseCentral: 'O mecanismo de Lindahl propõe que os bens públicos sejam financiados por preços personalizados (preços de imposto) onde a contribuição de cada cidadão iguala exatamente o seu benefício marginal.',
+    fundamentacaoTeorica: 'Erik Lindahl (1919) formulou um equilíbrio de troca voluntária para bens públicos. Em um modelo com indivíduos A e B, se A pagar uma fração h dos custos do bem público e B pagar (1 - h), o equilíbrio é alcançado no ponto onde ambos concordam unanimemente com a quantidade exata de bem público a ser provida. A soma dos preços de imposto iguala o custo marginal total (Condição de Samuelson).',
+    aplicabilidadePratica: 'Associações de produtores rurais ou moradores de condomínios fechados em São Luís que rateiam custos de vigilância armada ou dragagem de canais na proporção direta da metragem de testada de seus lotes.',
+    equacaoOuRegra: 'h_A \\times CMg + (1 - h_A) \\times CMg = CMg \\iff BMg_A + BMg_B = CMg',
+    conexoes: ['Z-05.01', 'Z-05.02', 'Z-02.02'],
+    referenciaBibliografica: 'Lindahl (1919, Die Gerechtigkeit der Besteuerung); Musgrave (1959); Stiglitz (2016)',
+    tags: ['#Lindahl', '#PrecosPersonalizados', '#BensPublicos', '#TrocaVoluntaria']
+  },
+  {
+    id: 'Z-05.05',
+    aulaNumero: 5,
+    conceito: 'Teoria dos Bens de Clube e Congestão Ótima de Buchanan',
+    teseCentral: 'Bens de clube são excludentes, mas não-rivais até que a capacidade da infraestrutura atinja a saturação, gerando custos de congestão que determinam o tamanho ótimo da comunidade.',
+    fundamentacaoTeorica: 'James M. Buchanan (1965) superou a dicotomia rígida entre bens 100% públicos e 100% privados. Em rodovias com pedágio, pontes ou redes de fibra óptica, a entrada de novos usuários reduz o custo médio por membro, mas após certo limiar gera atrito e lentidão (congestão). O tamanho ótimo do clube equilibra o ganho marginal de diluição de custo com o custo marginal de congestão.',
+    aplicabilidadePratica: 'A concessão rodoviária da BR-135 e o serviço de travessia aquaviária de ferry-boat na Baía de São Marcos (Terminal da Ponta da Espera ao Cujupe): serviço tarifado privadamente com gargalos sazonais de capacidade na maré.',
+    equacaoOuRegra: '\\frac{\\partial C_{m\\acute{e}dio}}{\\partial N} + \\frac{\\partial Congest\\~{a}o}{\\partial N} = 0 \\implies N^* \\text{(\\O}timo\\ de\\ Clube)',
+    conexoes: ['Z-05.01', 'Z-05.03', 'Z-11.02'],
+    referenciaBibliografica: 'Buchanan (1965, An Economic Theory of Clubs); Cornes & Sandler (1996)',
+    tags: ['#BensDeClube', '#Buchanan', '#Congestao', '#Infraestrutura']
+  },
+  {
+    id: 'Z-06.04',
+    aulaNumero: 6,
+    conceito: 'Teorema da Invariância da Incidência Tributária (Stiglitz)',
+    teseCentral: 'A repartição do ônus econômico final do tributo entre consumidores e produtores independe inteiramente de a obrigação legal recair sobre o comprador ou sobre o vendedor.',
+    fundamentacaoTeorica: 'Se o governo tributa a venda de uma mercadoria cobrando R$ 5 do fornecedor, a curva de oferta se desloca para cima em R$ 5. Se tributar a compra cobrando R$ 5 do consumidor, a curva de demanda se desloca para baixo em R$ 5. O novo preço líquido recebido pelo vendedor e o preço total pago pelo comprador são matematicamente rigorosos e idênticos em ambos os arranjos regulatórios.',
+    aplicabilidadePratica: 'O debate sobre o ICMS e o futuro IBS sobre combustíveis no Maranhão: transferir formalmente a obrigação jurídica da refinaria para o posto revendedor ou para o motorista no cupom fiscal não altera quem realmente suporta o ônus econômico.',
+    equacaoOuRegra: '\\Delta P_{comprador} = \\frac{E_s}{E_s + |E_d|} \\times t \\quad (\\text{Independe\\ do\\ Sujeito\\ Passivo})',
+    conexoes: ['Z-07.01', 'Z-06.01', 'Z-08.01'],
+    referenciaBibliografica: 'Stiglitz & Rosengard (2016, Cap. 17); Varian (Microeconomia Intermediária)',
+    tags: ['#InvarianciaTributaria', '#IncidenciaEconomica', '#Elasticidade', '#Stiglitz']
+  },
+  {
+    id: 'Z-07.04',
+    aulaNumero: 7,
+    conceito: 'Teorema do Second-Best de Lipsey e Lancaster',
+    teseCentral: 'Se uma das condições necessárias para a eficiência ótima de Pareto for violada e não puder ser corrigida, tentar satisfazer as demais condições isoladamente não garante o segundo melhor bem-estar, podendo reduzi-lo.',
+    fundamentacaoTeorica: 'Richard Lipsey e Kelvin Lancaster (1956) provaram que as condições de Pareto são interdependentes. Se um mercado na economia já possui uma imperfeição irremovível (ex: monopólio ou imposto pré-existente inalterável), impor marginalmente preços competitivos (P = CMg) em outros setores interconectados pode aumentar a distorção agregada.',
+    aplicabilidadePratica: 'Ao planejar incentivos fiscais estaduais para a cadeia de beneficiamento de soja e milho no Maranhão: desonerar apenas um elo da cadeia enquanto outros permanecem sobretaxados pode desarticular fornecedores locais.',
+    equacaoOuRegra: '\\text{Se } \\exists\\ i: P_i \\ne CMg_i, \\quad \\text{ent\\~{a}o impor } P_j = CMg_j \\not\\implies \\max W',
+    conexoes: ['Z-02.02', 'Z-04.02', 'Z-08.01'],
+    referenciaBibliografica: 'Lipsey & Lancaster (1956, The General Theory of Second Best); Stiglitz (2016)',
+    tags: ['#SecondBest', '#LipseyLancaster', '#DistorcoesTributarias', '#Eficiencia']
+  },
+  {
+    id: 'Z-08.04',
+    aulaNumero: 8,
+    conceito: 'Teorema de Diamond e Mirrlees de Eficiência na Produção',
+    teseCentral: 'O sistema tributário socialmente ótimo deve preservar a eficiência na produção (igualdade de TMST entre firmas), tributando apenas os bens de consumo final e desonerando bens intermediários e matérias-primas.',
+    fundamentacaoTeorica: 'Peter Diamond e James Mirrlees (1971) demonstraram que a economia deve permanecer sempre sobre a Fronteira de Possibilidades de Produção (PPF). Tributos em cascata ou impostos que incidem sobre insumos intermediários criam distorções cumulativas na escolha tecnológica das firmas, destruindo a eficiência produtiva antes mesmo que o produto chegue ao consumidor.',
+    aplicabilidadePratica: 'É o alicerce teórico internacional que justifica a eliminação do PIS, COFINS, ICMS e ISS no Brasil pela EC 132/2023, substituindo-os pelo IBS e CBS com princípio da não-cumulatividade plena e crédito financeiro amplo.',
+    equacaoOuRegra: 'TMST_{LK}^X = TMST_{LK}^Y \\quad \\text{garantida\\ com\\ isen\\c{c}\\~{a}o\\ de\\ insumos}',
+    conexoes: ['Z-08.01', 'Z-07.03', 'Z-06.01'],
+    referenciaBibliografica: 'Diamond & Mirrlees (1971, Optimal Taxation and Public Production); Stiglitz (2016)',
+    tags: ['#DiamondMirrlees', '#EficienciaNaProducao', '#NaoCumulatividade', '#IBS', '#CBS']
+  },
+  {
+    id: 'Z-09.04',
+    aulaNumero: 9,
+    conceito: 'Doença dos Custos de Baumol no Setor Público',
+    teseCentral: 'Setores intensivos em trabalho artesanal e contato humano (saúde, educação, segurança) sofrem aumentos crônicos de custos porque seus salários sobem acompanhando os ganhos de produtividade da indústria automatizada sem ganho tecnológico equivalente.',
+    fundamentacaoTeorica: 'William Baumol (1967) explicou o crescimento secular dos custos do setor público. Enquanto na indústria fabril e na agropecuária de grãos o avanço de maquinários reduz o custo unitário por hora trabalhada, ensinar alunos ou atender pacientes em postos de saúde requer praticamente a mesma quantidade de tempo de médicos e professores, forçando o aumento do orçamento público em proporção ao PIB.',
+    aplicabilidadePratica: 'A folha salarial dos professores da rede estadual maranhense e dos policiais militares consome fatias crescentes da arrecadação, mesmo com esforços de informatização da gestão pública.',
+    equacaoOuRegra: '\\frac{Custo_{Educa\\c{c}\\~{a}o, Sa\\acute{u}de}}{Custo_{Manufatura}} \\uparrow \\text{ao\\ longo\\ do\\ tempo}',
+    conexoes: ['Z-01.04', 'Z-09.02', 'Z-12.03'],
+    referenciaBibliografica: 'Baumol (1967, Macroeconomics of Unbalanced Growth); Stiglitz & Rosengard (2016)',
+    tags: ['#DoencaDeBaumol', '#SetorPublico', '#CustosCrescentes', '#Produtividade']
+  },
+  {
+    id: 'Z-10.04',
+    aulaNumero: 10,
+    conceito: 'Logrolling, Votação Estratégica e Pork-Barrel (Buchanan-Tullock)',
+    teseCentral: 'A troca explícita de votos entre parlamentares (logrolling) viabiliza a aprovação de projetos de interesse paroquial com benefícios altamente concentrados e custos difusos suportados por todos os contribuintes.',
+    fundamentacaoTeorica: 'James Buchanan e Gordon Tullock (1962, The Calculus of Consent) demonstraram que a regra de maioria simples sem intensidade de preferência estimula barganhas legislativas: o Deputado A apoia uma ponte ineficiente no feudo do Deputado B em troca do apoio de B para um aeródromo ineficiente no feudo de A. A soma dos dois projetos gera perda líquida de riqueza social.',
+    aplicabilidadePratica: 'As emendas parlamentares individuais e de comissão impositivas no Congresso Nacional e na ALEMA destinadas a obras municipais de pavimentação asfáltica sem prévia avaliação de custo-benefício socioeconômico.',
+    equacaoOuRegra: '\\sum Benef\\acute{i}cio_{Local} < \\sum Custo_{Tribut\\acute{a}rio\\ Difuso} \\quad (\\text{Aprovado\\ por\\ Logrolling})',
+    conexoes: ['Z-10.01', 'Z-10.03', 'Z-09.01'],
+    referenciaBibliografica: 'Buchanan & Tullock (1962, The Calculus of Consent, Cap. 10); Arvate & Biderman (2004)',
+    tags: ['#Logrolling', '#PorkBarrel', '#EmendasParlamentares', '#EscolhaPublica']
+  },
+  {
+    id: 'Z-11.04',
+    aulaNumero: 11,
+    conceito: 'Teorema da Equivalência Fiscal de Mancur Olson',
+    teseCentral: 'Existe eficiência alocativa máxima quando os limites geográficos da jurisdição que toma a decisão de gastar coincidem rigorosamente com os limites geográficos dos cidadãos que usufruem do benefício e pagam os custos.',
+    fundamentacaoTeorica: 'Mancur Olson (1969) demonstrou que descompassos espaciais geram graves ineficiências: se a jurisdição for menor que a área de benefício, haverá transbordamentos (spillovers) e subprovisão; se a jurisdição for maior, cidadãos pagarão por serviços de que não usufruem (externalidade fiscal e exploração regional). A "equivalência fiscal" requer uma estrutura institucional multicêntrica calibrada para cada raio de bem público.',
+    aplicabilidadePratica: 'A gestão de bacias hidrográficas compartilhadas (como a do Rio Itapecuru e Rio Parnaíba no Maranhão) que exige comitês intermunicipais/interestaduais específicos, pois uma única prefeitura não internaliza os efeitos de montante e jusante.',
+    equacaoOuRegra: '\\text{Espa\\c{c}o\\ de\\ Benef\\acute{i}cio} = \\text{Espa\\c{c}o\\ de\\ Decis\\~{a}o} = \\text{Espa\\c{c}o\\ Tribut\\acute{a}rio}',
+    conexoes: ['Z-11.01', 'Z-11.02', 'Z-05.01'],
+    referenciaBibliografica: 'Olson (1969, The Principle of Fiscal Equivalence); Oates (1972, Fiscal Federalism)',
+    tags: ['#EquivalenciaFiscal', '#MancurOlson', '#FederalismoFiscal', '#Spillovers']
   }
 ];

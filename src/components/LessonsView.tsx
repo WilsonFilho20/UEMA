@@ -5,6 +5,9 @@ import { GOOGLE_DRIVE_REPO } from '../data/questionsData';
 import { Aula, UnidadeCurricular, ReferenciaOficial } from '../types';
 import { UemaEconomiaLogo } from './UemaEconomiaLogo';
 import { ZettelkastenViewer } from './ZettelkastenViewer';
+import { InteractiveLessonModule } from './InteractiveLessonModule';
+import { CaseStudiesHub } from './CaseStudiesHub';
+import { OBTER_CASOS_POR_UNIDADE } from '../data/casesData';
 import {
   BookOpen,
   ExternalLink,
@@ -25,7 +28,8 @@ import {
   Clock,
   Award,
   Library,
-  GraduationCap
+  GraduationCap,
+  Briefcase
 } from 'lucide-react';
 
 interface LessonsViewProps {
@@ -34,7 +38,8 @@ interface LessonsViewProps {
 }
 
 export const LessonsView: React.FC<LessonsViewProps> = ({ onOpenSimulator, onOpenQuiz }) => {
-  const [abaAtiva, setAbaAtiva] = useState<'unidades' | 'aulas' | 'referencias' | 'zettelkasten'>('unidades');
+  const [abaAtiva, setAbaAtiva] = useState<'unidades' | 'casos' | 'aulas' | 'referencias' | 'zettelkasten'>('unidades');
+  const [unidadeFiltroCasos, setUnidadeFiltroCasos] = useState<number | 'Todas'>('Todas');
   
   // Filtros da aba de Aulas
   const [unidadeFiltroAulas, setUnidadeFiltroAulas] = useState<number | 'Todas'>('Todas');
@@ -142,6 +147,21 @@ export const LessonsView: React.FC<LessonsViewProps> = ({ onOpenSimulator, onOpe
         </button>
 
         <button
+          onClick={() => {
+            setAbaAtiva('casos');
+            setUnidadeFiltroCasos('Todas');
+          }}
+          className={`py-2 px-3.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            abaAtiva === 'casos'
+              ? 'bg-[#002752] text-[#ebc000] shadow-xs'
+              : 'text-slate-700 hover:text-slate-900 bg-white/60 hover:bg-white'
+          }`}
+        >
+          <Briefcase className="w-4 h-4 text-[#00733f]" />
+          <span>Estudos de Caso (25 Casos • 5/Unid)</span>
+        </button>
+
+        <button
           onClick={() => setAbaAtiva('aulas')}
           className={`py-2 px-3.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
             abaAtiva === 'aulas'
@@ -174,7 +194,7 @@ export const LessonsView: React.FC<LessonsViewProps> = ({ onOpenSimulator, onOpe
           }`}
         >
           <Bookmark className="w-4 h-4 text-[#002752]" />
-          <span>Fichas Zettelkasten (Slip-Box)</span>
+          <span>Fichas Zettelkasten (50 Conceitos)</span>
         </button>
       </div>
 
@@ -453,6 +473,57 @@ export const LessonsView: React.FC<LessonsViewProps> = ({ onOpenSimulator, onOpe
                     </div>
                   </div>
 
+                  {/* Estudos de Caso da Unidade (5 Casos) */}
+                  <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-200/60 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-bold text-[#00733f] flex items-center gap-1.5">
+                          <Briefcase className="w-3.5 h-3.5 text-[#00733f]" />
+                          5 Estudos de Caso & Fixação Conceitual (Unidade {unidade.numero}):
+                        </span>
+                        <p className="text-[11px] text-slate-600">
+                          Casos empíricos aplicados à realidade brasileira e maranhense com dados e dilemas fiscais.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setAbaAtiva('casos');
+                          setUnidadeFiltroCasos(unidade.numero);
+                        }}
+                        className="px-3 py-1.5 bg-[#00733f] hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      >
+                        Abrir os 5 Casos no Hub →
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
+                      {OBTER_CASOS_POR_UNIDADE(unidade.numero).map((caso) => (
+                        <div
+                          key={caso.id}
+                          onClick={() => {
+                            setAbaAtiva('casos');
+                            setUnidadeFiltroCasos(unidade.numero);
+                          }}
+                          className="p-2.5 bg-white hover:bg-emerald-50/50 border border-emerald-100 hover:border-emerald-300 rounded-lg cursor-pointer transition-all space-y-1 text-left shadow-2xs"
+                        >
+                          <div className="flex items-center justify-between text-[9px]">
+                            <span className="font-bold text-[#00733f] bg-emerald-100/60 px-1.5 py-0.5 rounded">
+                              Caso #{caso.numeroNaUnidade}
+                            </span>
+                            <span className="text-slate-500 font-medium">{caso.ambito}</span>
+                          </div>
+                          <h6 className="text-[11px] font-bold text-slate-800 line-clamp-1">
+                            {caso.titulo}
+                          </h6>
+                          <p className="text-[10px] text-slate-500 line-clamp-1">
+                            {caso.teoriaAplicada.conceito}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Simuladores Interativos Associados */}
                   {unidade.simuladores && unidade.simuladores.length > 0 && onOpenSimulator && (
                     <div className="p-4 bg-[#002752]/5 rounded-xl border border-[#002752]/15 flex flex-wrap items-center justify-between gap-3">
@@ -485,6 +556,16 @@ export const LessonsView: React.FC<LessonsViewProps> = ({ onOpenSimulator, onOpe
             ))}
           </div>
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* ABA DE ESTUDOS DE CASO (25 CASOS PRÁTICOS • 5 POR UNIDADE)                */}
+      {/* ========================================================================= */}
+      {abaAtiva === 'casos' && (
+        <CaseStudiesHub
+          initialUnidade={unidadeFiltroCasos}
+          onNavigateToSimulator={onOpenSimulator}
+        />
       )}
 
       {/* ========================================================================= */}
@@ -757,6 +838,13 @@ export const LessonsView: React.FC<LessonsViewProps> = ({ onOpenSimulator, onOpe
                           </p>
                         </div>
                       )}
+
+                      {/* MÓDULO DE AULA INTERATIVA: DILEMAS, TOMADA DE DECISÃO E SIMULADORES */}
+                      <InteractiveLessonModule
+                        aula={aula}
+                        onOpenSimulator={onOpenSimulator ?? (() => {})}
+                        onOpenQuiz={onOpenQuiz ?? (() => {})}
+                      />
 
                       {/* Bibliografia Recomendada e Detalhada */}
                       <div className="space-y-2.5 pt-2 border-t border-slate-100">
