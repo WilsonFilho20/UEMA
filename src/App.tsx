@@ -9,6 +9,7 @@ import { AcademicCalendarView } from './components/AcademicCalendarView';
 import { DatabaseSchemaView } from './components/DatabaseSchemaView';
 import { PedagogicalDashboardView } from './components/PedagogicalDashboardView';
 import { CaseStudiesHub } from './components/CaseStudiesHub';
+import { ForumModule } from './components/ForumModule';
 import { AuthView } from './components/AuthView';
 import { authService } from './services/authService';
 import { UsuarioAutenticado } from './types';
@@ -24,6 +25,7 @@ export default function App() {
   const [tabAtiva, setTabAtiva] = useState<string>('aulas');
   const [parametroSimulado, setParametroSimulado] = useState<{ aula?: number; unidade?: number } | null>(null);
   const [parametroSimuladorId, setParametroSimuladorId] = useState<any>(undefined);
+  const [parametroForumAula, setParametroForumAula] = useState<string | null>(null);
 
   // Monitorar autenticação do Firebase e sincronizar estado
   useEffect(() => {
@@ -127,6 +129,10 @@ export default function App() {
                   }
                   setTabAtiva('simulado');
                 }}
+                onOpenForum={(aulaId?: string) => {
+                  setParametroForumAula(aulaId || null);
+                  setTabAtiva('forum');
+                }}
               />
             )}
 
@@ -135,6 +141,24 @@ export default function App() {
                 onNavigateToSimulator={(simId?: string) => {
                   if (simId) setParametroSimuladorId(simId);
                   setTabAtiva('simuladores');
+                }}
+                onNavigateToForum={(casoId?: string) => {
+                  setParametroForumAula(casoId || null);
+                  setTabAtiva('forum');
+                }}
+              />
+            )}
+
+            {tabAtiva === 'forum' && (
+              <ForumModule
+                usuarioAtual={usuarioAtual}
+                filtroAulaInicial={parametroForumAula}
+                onNavigateToSimulator={(simId: string) => {
+                  setParametroSimuladorId(simId);
+                  setTabAtiva('simuladores');
+                }}
+                onNavigateToLesson={() => {
+                  setTabAtiva('aulas');
                 }}
               />
             )}

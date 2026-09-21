@@ -265,3 +265,40 @@ export interface UsuarioAutenticado {
   fotoPerfil?: string;
 }
 
+export interface RespostaForum {
+  id: string;
+  duvidaId: string;
+  autorId: string;
+  autorNome: string;
+  autorPapel: 'professor' | 'aluno';
+  autorMatricula?: string;
+  texto: string;
+  criadoEm: string;
+  timestamp: number;
+  isProfessor: boolean;
+  votos: number;
+  marcadaComoSolucao?: boolean;
+}
+
+export interface DuvidaForum {
+  id: string;
+  aulaId: string; // Ex: 'aula-01', 'aula-03', 'caso-u1-01', 'geral'
+  aulaTitulo: string;
+  unidadeNumero?: number;
+  titulo: string;
+  descricao: string;
+  autorId: string;
+  autorNome: string;
+  autorPapel: 'professor' | 'aluno';
+  autorMatricula?: string;
+  criadoEm: string;
+  timestamp: number;
+  votos: number;
+  tags: string[];
+  status: 'aberto' | 'respondido_professor' | 'resolvido';
+  totalRespostas: number;
+  respostas?: RespostaForum[];
+  simuladorSugeridoId?: string;
+}
+
+

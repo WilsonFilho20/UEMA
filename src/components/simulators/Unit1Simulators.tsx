@@ -477,6 +477,95 @@ export const WelfareFrontierSimulator: React.FC = () => {
           />
         </div>
 
+        {/* Gráfico Interativo da Fronteira de Possibilidades de Utilidade (UPF) */}
+        <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 text-white space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#ebc000] font-bold block">
+                Fronteira de Possibilidades de Utilidade (UPF) & Curvas Sociais de Bergson-Samuelson
+              </span>
+              <h4 className="text-xs sm:text-sm font-bold text-white">
+                Espaço de Utilidade (U_A vs U_B) e Tangência Ética
+              </h4>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] font-mono">
+              <span className="flex items-center gap-1.5 text-blue-400">
+                <span className="w-2.5 h-0.5 bg-blue-400 inline-block" /> UPF (Pareto Eficiente)
+              </span>
+              <span className="flex items-center gap-1.5 text-amber-400">
+                <span className="w-2.5 h-0.5 bg-amber-400 inline-block" /> Ponto de Bliss
+              </span>
+            </div>
+          </div>
+
+          <div className="w-full overflow-x-auto bg-slate-950/70 p-3 rounded-xl border border-slate-800/80">
+            <svg viewBox="0 0 460 260" className="w-full max-w-lg mx-auto select-none font-sans text-xs">
+              {/* Grid / Axes */}
+              <line x1="50" y1="20" x2="50" y2="220" stroke="#334155" strokeWidth="1.5" />
+              <line x1="50" y1="220" x2="420" y2="220" stroke="#334155" strokeWidth="1.5" />
+
+              <text x="45" y="25" textAnchor="end" fill="#94a3b8" fontSize="10" fontWeight="bold">U_B</text>
+              <text x="415" y="235" textAnchor="end" fill="#94a3b8" fontSize="10" fontWeight="bold">U_A</text>
+
+              {(() => {
+                const ox = 50;
+                const oy = 220;
+                const s = 1.8; // 100 units = 180px
+
+                const upfPath = `M ${ox},${oy - 100 * s} A ${100 * s} ${100 * s} 0 0 1 ${ox + 100 * s},${oy}`;
+
+                const px = ox + uA * s;
+                const py = oy - uB * s;
+
+                const slope = - (uA / Math.max(1, uB));
+                const dx = 40;
+                const tx1 = px - dx;
+                const ty1 = py - slope * dx;
+                const tx2 = px + dx;
+                const ty2 = py + slope * dx;
+
+                return (
+                  <g>
+                    <path
+                      d={`M ${ox},${oy} L ${ox},${oy - 100 * s} A ${100 * s} ${100 * s} 0 0 1 ${ox + 100 * s},${oy} Z`}
+                      fill="#0284c7"
+                      fillOpacity="0.12"
+                    />
+
+                    <path d={upfPath} fill="none" stroke="#38bdf8" strokeWidth="3" />
+                    <text x={ox + 100 * s - 10} y={oy - 10} fill="#38bdf8" fontSize="10" fontWeight="bold">
+                      UPF
+                    </text>
+
+                    <line x1={tx1} y1={ty1} x2={tx2} y2={ty2} stroke="#fbbf24" strokeWidth="2" strokeDasharray="4,3" />
+
+                    <line x1={px} y1={py} x2={px} y2={oy} stroke="#94a3b8" strokeDasharray="3,3" />
+                    <line x1={ox} y1={py} x2={px} y2={py} stroke="#94a3b8" strokeDasharray="3,3" />
+
+                    <text x={px} y={oy + 14} fill="#60a5fa" fontSize="9" fontWeight="bold" textAnchor="middle">
+                      {uA}
+                    </text>
+                    <text x={ox - 6} y={py + 3} fill="#34d399" fontSize="9" fontWeight="bold" textAnchor="end">
+                      {uB}
+                    </text>
+
+                    <circle cx={px} cy={py} r="6" fill="#f59e0b" stroke="#ffffff" strokeWidth="2" />
+                    <g transform={`translate(${Math.min(320, Math.max(60, px - 55))}, ${Math.max(10, py - 26)})`}>
+                      <rect width="110" height="20" rx="4" fill="#d97706" />
+                      <text x="55" y="14" fill="#ffffff" fontSize="9.5" fontWeight="bold" textAnchor="middle">
+                        Bliss (U_A={uA}, U_B={uB})
+                      </text>
+                    </g>
+                  </g>
+                );
+              })()}
+            </svg>
+          </div>
+          <p className="text-[11px] text-slate-400 text-center">
+            Mova o slider acima para deslocar o peso ético da sociedade e observar a tangência dinâmica entre a UPF e a Curva de Indiferença Social.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/50">
             <span className="text-xs text-blue-900 uppercase block font-semibold">Utilidade do Agente A</span>

@@ -25,7 +25,9 @@ import {
   Eye,
   X,
   TrendingUp,
-  BookCheck
+  BookCheck,
+  Database,
+  Trash2
 } from 'lucide-react';
 import {
   BarChart,
@@ -46,16 +48,19 @@ import { AcademicCalendarView } from './AcademicCalendarView';
 import {
   firestoreDataService,
   RegistroSimuladoFirestore,
-  ProvaElaboradaDocente
+  ProvaElaboradaDocente,
+  isAlunoTeste
 } from '../services/firestoreDataService';
 import { authService } from '../services/authService';
 import { exportarProvaParaPDF } from '../utils/pdfExportService';
 import { PedagogicalDashboardView } from './PedagogicalDashboardView';
 import { ProfessorLessonsCatalog } from './ProfessorLessonsCatalog';
+import { UnitPerformanceReportView } from './UnitPerformanceReportView';
+import { DatabaseManagerView } from './DatabaseManagerView';
 
 export const ProfessorDashboard: React.FC = () => {
   // Navigation tabs within Professor Dashboard
-  const [abaDocente, setAbaDocente] = useState<'visao_geral' | 'relacao_aulas' | 'pedagogico' | 'calendario' | 'gerador' | 'alunos' | 'historico_provas'>('visao_geral');
+  const [abaDocente, setAbaDocente] = useState<'visao_geral' | 'relacao_aulas' | 'relatorios_unidades' | 'gestao_banco' | 'pedagogico' | 'calendario' | 'gerador' | 'alunos' | 'historico_provas'>('visao_geral');
 
   // Real data state from Firestore
   const [simuladosTurma, setSimuladosTurma] = useState<RegistroSimuladoFirestore[]>([]);
@@ -556,6 +561,33 @@ export const ProfessorDashboard: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setAbaDocente('relatorios_unidades')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            abaDocente === 'relatorios_unidades'
+              ? 'bg-[#002752] text-white shadow-xs ring-2 ring-[#ebc000]'
+              : 'text-slate-700 hover:bg-white/70'
+          }`}
+        >
+          <FileText className="w-4 h-4 text-[#ebc000]" />
+          Relatórios por Unidade (1 a 5)
+        </button>
+
+        <button
+          onClick={() => setAbaDocente('gestao_banco')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            abaDocente === 'gestao_banco'
+              ? 'bg-[#002752] text-white shadow-xs ring-2 ring-rose-500'
+              : 'text-slate-700 hover:bg-white/70'
+          }`}
+        >
+          <Database className="w-4 h-4 text-rose-500" />
+          Gerenciar Banco & Testes
+          {simuladosTurma.some((s) => isAlunoTeste(s.alunoId, s.alunoNome, s.alunoMatricula)) && (
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" title="Alunos de teste detectados no banco" />
+          )}
+        </button>
+
+        <button
           onClick={() => setAbaDocente('pedagogico')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             abaDocente === 'pedagogico'
@@ -615,6 +647,23 @@ export const ProfessorDashboard: React.FC = () => {
           Provas Elaboradas Salvas ({provasSalvas.length})
         </button>
       </div>
+
+      {/* Relatórios de Desempenho por Unidade Curricular */}
+      {abaDocente === 'relatorios_unidades' && (
+        <UnitPerformanceReportView
+          simulados={simuladosTurma}
+          professorNome={usuarioLogado?.nome || 'Prof. Dr. Docente UEMA'}
+          turmaNome="Ciências Econômicas — UEMA"
+        />
+      )}
+
+      {/* Gerenciamento do Banco de Dados & Remoção de Alunos de Teste */}
+      {abaDocente === 'gestao_banco' && (
+        <DatabaseManagerView
+          simulados={simuladosTurma}
+          onDataChanged={recarregarDados}
+        />
+      )}
 
       {/* Dashboard Pedagógico & Perfis */}
       {abaDocente === 'pedagogico' && (
@@ -728,6 +777,13 @@ export const ProfessorDashboard: React.FC = () => {
                   <div className="pt-2 border-t border-slate-200 text-[10px] text-slate-600 space-y-1">
                     <span className="text-slate-400 block font-semibold">Tópico mais desafiador:</span>
                     <p className="font-medium text-slate-800 leading-tight">{u.topicoCritico}</p>
+                    <button
+                      onClick={() => setAbaDocente('relatorios_unidades')}
+                      className="w-full mt-2 py-1 px-2 bg-[#002752] hover:bg-[#001c3d] text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <FileText className="w-3 h-3 text-[#ebc000]" />
+                      Relatório Oficial U{u.numero} →
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1066,6 +1122,23 @@ export const ProfessorDashboard: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
+              {simuladosTurma.some((s) => isAlunoTeste(s.alunoId, s.alunoNome, s.alunoMatricula)) && (
+                <div className="m-4 p-3 bg-amber-50 rounded-xl border border-amber-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 text-amber-900 font-medium">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      Existem contas ou submissões demonstrativas (teste) na base. Você pode excluí-las com 1 clique para consolidar apenas dados oficiais da UEMA.
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setAbaDocente('gestao_banco')}
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+                  >
+                    <Database className="w-3.5 h-3.5" />
+                    Ir para Gestão do Banco
+                  </button>
+                </div>
+              )}
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
                   <tr>
@@ -1079,42 +1152,52 @@ export const ProfessorDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {listaAlunosDinamica.map((aluno) => (
-                    <tr key={aluno.id} className="hover:bg-slate-50">
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-slate-900 block">{aluno.nome}</span>
-                        <span className="text-[11px] font-mono text-slate-500">{aluno.matricula}</span>
-                      </td>
-                      <td className="py-3 px-4 text-slate-700 font-semibold">{aluno.totalSimulados}</td>
-                      <td className="py-3 px-4 text-slate-600">{aluno.questoesRespondidas}</td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-0.5 rounded font-black font-mono ${
-                          aluno.mediaSimulados >= 7 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
-                        }`}>
-                          {aluno.mediaSimulados.toFixed(1)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 font-mono font-bold text-slate-800">{aluno.taxaAcerto}%</td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          aluno.statusRisco === 'Estável' ? 'bg-emerald-100 text-emerald-800' :
-                          aluno.statusRisco === 'Atenção' ? 'bg-amber-100 text-amber-900' : 'bg-rose-100 text-rose-800'
-                        }`}>
-                          {aluno.statusRisco}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <button
-                          onClick={() => setAlunoSelecionado(aluno)}
-                          className="px-3 py-1.5 bg-[#002752] text-white hover:bg-[#001c3d] rounded-lg text-xs font-bold flex items-center gap-1.5 mx-auto transition-transform hover:scale-105 cursor-pointer shadow-xs"
-                          title="Abrir Diagnóstico Individual do Aluno"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-[#ebc000]" />
-                          Ver Perfil
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {listaAlunosDinamica.map((aluno) => {
+                    const ehTeste = isAlunoTeste(aluno.id, aluno.nome, aluno.matricula);
+                    return (
+                      <tr key={aluno.id} className="hover:bg-slate-50">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-900 block">{aluno.nome}</span>
+                            {ehTeste && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                Teste
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-mono text-slate-500">{aluno.matricula}</span>
+                        </td>
+                        <td className="py-3 px-4 text-slate-700 font-semibold">{aluno.totalSimulados}</td>
+                        <td className="py-3 px-4 text-slate-600">{aluno.questoesRespondidas}</td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-0.5 rounded font-black font-mono ${
+                            aluno.mediaSimulados >= 7 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                          }`}>
+                            {aluno.mediaSimulados.toFixed(1)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-slate-800">{aluno.taxaAcerto}%</td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            aluno.statusRisco === 'Estável' ? 'bg-emerald-100 text-emerald-800' :
+                            aluno.statusRisco === 'Atenção' ? 'bg-amber-100 text-amber-900' : 'bg-rose-100 text-rose-800'
+                          }`}>
+                            {aluno.statusRisco}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            onClick={() => setAlunoSelecionado(aluno)}
+                            className="px-3 py-1.5 bg-[#002752] text-white hover:bg-[#001c3d] rounded-lg text-xs font-bold flex items-center gap-1.5 mx-auto transition-transform hover:scale-105 cursor-pointer shadow-xs"
+                            title="Abrir Diagnóstico Individual do Aluno"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-[#ebc000]" />
+                            Ver Perfil
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

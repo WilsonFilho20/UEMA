@@ -1527,3 +1527,329 @@ export function exportarRoteiroEstudosPersonalizadoPDF(dados: DadosRoteiroEstudo
 
   doc.save(`uema_roteiro_estudos_${dados.aluno.matricula}_${Date.now()}.pdf`);
 }
+
+export interface DadosRelatorioUnidadePDF {
+  unidadeNumero: number;
+  unidadeTitulo: string;
+  turmaNome: string;
+  professorNome: string;
+  dataGeracao?: string;
+  totalAlunosAvaliados: number;
+  totalQuestoesRespondidas: number;
+  taxaMediaAcerto: number;
+  mediaNota: number;
+  distribuicaoNotas?: {
+    excelente: number;
+    bom: number;
+    regular: number;
+    critico: number;
+  };
+  topicosDesempenho: {
+    nome: string;
+    taxaAcerto: number;
+    totalQuestoes: number;
+  }[];
+  questoesCriticas?: {
+    id: string;
+    topico: string;
+    taxaErro: number;
+    motivo?: string;
+  }[];
+  alunos: {
+    nome: string;
+    matricula: string;
+    totalQuestoes: number;
+    acertos: number;
+    taxaAcerto: number;
+    nota: number;
+    status: string;
+  }[];
+  parecerPedagogico: string;
+  recomendacoesDidaticas: string[];
+}
+
+export function exportarRelatorioDesempenhoUnidadePDF(dados: DadosRelatorioUnidadePDF) {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 14;
+  const contentWidth = pageWidth - marginX * 2;
+  let cursorY = 12;
+
+  const desenharRodape = (numPagina: number) => {
+    doc.setDrawColor(215, 222, 230);
+    doc.setLineWidth(0.3);
+    doc.line(marginX, pageHeight - 11, marginX + contentWidth, pageHeight - 11);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(115, 125, 140);
+    doc.text(
+      'UEMA • CENTRO DE CIÊNCIAS SOCIAIS APLICADAS • CURSO DE CIÊNCIAS ECONÔMICAS • FINANÇAS PÚBLICAS',
+      marginX,
+      pageHeight - 6.5
+    );
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 39, 82);
+    doc.text(`Página ${numPagina}`, pageWidth - marginX - 14, pageHeight - 6.5);
+  };
+
+  const checarQuebraPagina = (espacoNecessario: number) => {
+    if (cursorY + espacoNecessario > pageHeight - 15) {
+      doc.addPage();
+      cursorY = 14;
+      return true;
+    }
+    return false;
+  };
+
+  // 1. Cabeçalho Institucional
+  doc.setFillColor(0, 39, 82); // Azul Marinho UEMA
+  doc.rect(marginX, cursorY, contentWidth, 24, 'F');
+
+  doc.setFillColor(235, 192, 0); // Amarelo Dourado
+  doc.rect(marginX, cursorY + 23, contentWidth, 1.2, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('UNIVERSIDADE ESTADUAL DO MARANHÃO — UEMA', marginX + 6, cursorY + 6.5);
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(215, 228, 245);
+  doc.text('CENTRO DE CIÊNCIAS SOCIAIS APLICADAS • CURSO DE CIÊNCIAS ECONÔMICAS', marginX + 6, cursorY + 11.5);
+  doc.text('DEPARTAMENTO DE ECONOMIA • TEORIA DAS FINANÇAS PÚBLICAS', marginX + 6, cursorY + 16);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(235, 192, 0);
+  doc.text(`RELATÓRIO SETORIAL: UNIDADE ${dados.unidadeNumero}`, pageWidth - marginX - 48, cursorY + 8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(255, 255, 255);
+  doc.text(dados.dataGeracao || new Date().toLocaleDateString('pt-BR'), pageWidth - marginX - 48, cursorY + 13.5);
+
+  cursorY += 28;
+
+  // 2. Título do Relatório
+  doc.setFillColor(245, 248, 252);
+  doc.setDrawColor(210, 220, 235);
+  doc.roundedRect(marginX, cursorY, contentWidth, 17, 2, 2, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(0, 39, 82);
+  doc.text(`RELATÓRIO DE DESEMPENHO CURRICULAR — UNIDADE ${dados.unidadeNumero}`, marginX + 4, cursorY + 6);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(60, 75, 95);
+  doc.text(`Ementa: ${dados.unidadeTitulo}`, marginX + 4, cursorY + 11.5);
+
+  cursorY += 21;
+
+  // 3. Indicadores Gerais da Unidade (Cards de Métricas)
+  const cardW = (contentWidth - 6) / 4;
+  const kpis = [
+    { label: 'TAXA MÉDIA DE ACERTO', val: `${dados.taxaMediaAcerto}%`, cor: [0, 115, 63] },
+    { label: 'MÉDIA DA UNIDADE', val: `${dados.mediaNota.toFixed(1)} / 10`, cor: [0, 39, 82] },
+    { label: 'QUESTÕES RESOLVIDAS', val: `${dados.totalQuestoesRespondidas}`, cor: [110, 60, 160] },
+    { label: 'DISCENTES AVALIADOS', val: `${dados.totalAlunosAvaliados}`, cor: [180, 80, 20] }
+  ];
+
+  kpis.forEach((k, idx) => {
+    const xPos = marginX + idx * (cardW + 2);
+    doc.setFillColor(250, 252, 255);
+    doc.setDrawColor(220, 228, 238);
+    doc.roundedRect(xPos, cursorY, cardW, 16, 1.5, 1.5, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6);
+    doc.setTextColor(100, 115, 130);
+    doc.text(k.label, xPos + 2.5, cursorY + 4.5);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(k.cor[0], k.cor[1], k.cor[2]);
+    doc.text(k.val, xPos + 2.5, cursorY + 11.5);
+  });
+
+  cursorY += 20;
+
+  // 4. Desempenho por Tópico da Unidade
+  checarQuebraPagina(40);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(0, 39, 82);
+  doc.text(`1. DIAGNÓSTICO TEMÁTICO POR TÓPICO DA UNIDADE ${dados.unidadeNumero}`, marginX, cursorY);
+  cursorY += 3;
+
+  doc.setFillColor(0, 39, 82);
+  doc.rect(marginX, cursorY, contentWidth, 5.5, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.8);
+  doc.setTextColor(255, 255, 255);
+  doc.text('Tópico Curricular / Objeto do Conhecimento', marginX + 3, cursorY + 3.8);
+  doc.text('Resolvidas', marginX + 115, cursorY + 3.8);
+  doc.text('Taxa Acerto (%)', marginX + 138, cursorY + 3.8);
+  doc.text('Diagnóstico Pedagógico', marginX + 162, cursorY + 3.8);
+  cursorY += 5.5;
+
+  dados.topicosDesempenho.forEach((t, i) => {
+    checarQuebraPagina(6);
+    doc.setFillColor(i % 2 === 0 ? 255 : 248, i % 2 === 0 ? 255 : 250, i % 2 === 0 ? 255 : 252);
+    doc.rect(marginX, cursorY, contentWidth, 5.5, 'F');
+    doc.setDrawColor(230, 235, 242);
+    doc.line(marginX, cursorY + 5.5, marginX + contentWidth, cursorY + 5.5);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.8);
+    doc.setTextColor(30, 41, 59);
+    doc.text(t.nome.slice(0, 65), marginX + 3, cursorY + 3.8);
+
+    doc.text(String(t.totalQuestoes), marginX + 118, cursorY + 3.8);
+
+    doc.setFont('helvetica', 'bold');
+    if (t.taxaAcerto >= 70) {
+      doc.setTextColor(0, 115, 63);
+    } else if (t.taxaAcerto >= 50) {
+      doc.setTextColor(180, 100, 0);
+    } else {
+      doc.setTextColor(190, 30, 30);
+    }
+    doc.text(`${t.taxaAcerto}%`, marginX + 143, cursorY + 3.8);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.2);
+    const diag = t.taxaAcerto >= 75 ? 'Domínio Consolidado' : t.taxaAcerto >= 60 ? 'Regular / Em Fixação' : 'Alerta / Retomar Conteúdo';
+    doc.text(diag, marginX + 162, cursorY + 3.8);
+
+    cursorY += 5.5;
+  });
+
+  cursorY += 5;
+
+  // 5. Tabela de Discentes na Unidade
+  checarQuebraPagina(40);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(0, 39, 82);
+  doc.text(`2. RENDIMENTO DOS DISCENTES NA UNIDADE ${dados.unidadeNumero}`, marginX, cursorY);
+  cursorY += 3;
+
+  doc.setFillColor(0, 39, 82);
+  doc.rect(marginX, cursorY, contentWidth, 5.5, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.8);
+  doc.setTextColor(255, 255, 255);
+  doc.text('Nome do Estudante', marginX + 3, cursorY + 3.8);
+  doc.text('Matrícula', marginX + 75, cursorY + 3.8);
+  doc.text('Questões', marginX + 110, cursorY + 3.8);
+  doc.text('Acertos', marginX + 130, cursorY + 3.8);
+  doc.text('Aprov. (%)', marginX + 147, cursorY + 3.8);
+  doc.text('Nota (0-10)', marginX + 166, cursorY + 3.8);
+  cursorY += 5.5;
+
+  dados.alunos.slice(0, 25).forEach((al, i) => {
+    checarQuebraPagina(5.5);
+    doc.setFillColor(i % 2 === 0 ? 255 : 249, i % 2 === 0 ? 255 : 250, i % 2 === 0 ? 255 : 252);
+    doc.rect(marginX, cursorY, contentWidth, 5.5, 'F');
+    doc.setDrawColor(230, 235, 242);
+    doc.line(marginX, cursorY + 5.5, marginX + contentWidth, cursorY + 5.5);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.8);
+    doc.setTextColor(30, 41, 59);
+    doc.text(al.nome.slice(0, 42), marginX + 3, cursorY + 3.8);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(90, 100, 115);
+    doc.text(al.matricula, marginX + 75, cursorY + 3.8);
+
+    doc.setTextColor(30, 41, 59);
+    doc.text(String(al.totalQuestoes), marginX + 115, cursorY + 3.8);
+    doc.text(String(al.acertos), marginX + 133, cursorY + 3.8);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${al.taxaAcerto}%`, marginX + 150, cursorY + 3.8);
+
+    if (al.nota >= 7) {
+      doc.setTextColor(0, 115, 63);
+    } else if (al.nota >= 5) {
+      doc.setTextColor(180, 100, 0);
+    } else {
+      doc.setTextColor(190, 30, 30);
+    }
+    doc.text(al.nota.toFixed(1), marginX + 170, cursorY + 3.8);
+
+    cursorY += 5.5;
+  });
+
+  cursorY += 6;
+
+  // 6. Parecer Pedagógico Institucional Formativo & Recomendações
+  checarQuebraPagina(38);
+  doc.setFillColor(248, 250, 254);
+  doc.setDrawColor(190, 205, 225);
+  doc.roundedRect(marginX, cursorY, contentWidth, 32, 2, 2, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(0, 39, 82);
+  doc.text(`3. PARECER FORMATIVO E RECOMENDAÇÕES DIDÁTICAS — UNIDADE ${dados.unidadeNumero}`, marginX + 4, cursorY + 5);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.8);
+  doc.setTextColor(50, 65, 80);
+  const parecerLinhas = doc.splitTextToSize(dados.parecerPedagogico, contentWidth - 8);
+  doc.text(parecerLinhas.slice(0, 3), marginX + 4, cursorY + 9.5);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(0, 115, 63);
+  doc.text('Diretrizes para as Próximas Aulas:', marginX + 4, cursorY + 19);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(60, 75, 90);
+  dados.recomendacoesDidaticas.slice(0, 2).forEach((rec, rIdx) => {
+    doc.text(`• ${rec.slice(0, 110)}`, marginX + 5, cursorY + 23.5 + rIdx * 4);
+  });
+
+  cursorY += 38;
+
+  // 7. Campo de Assinatura Docente
+  checarQuebraPagina(22);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(80, 90, 105);
+  doc.text('São Luís — Maranhão, Universidade Estadual do Maranhão (UEMA).', marginX, cursorY + 4);
+
+  doc.setDrawColor(160, 175, 195);
+  doc.setLineWidth(0.3);
+  doc.line(marginX + 60, cursorY + 16, marginX + contentWidth - 60, cursorY + 16);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(0, 39, 82);
+  doc.text(dados.professorNome || 'Docente Responsável — Teoria das Finanças Públicas', pageWidth / 2, cursorY + 19.5, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(110, 120, 135);
+  doc.text('Departamento de Economia / CCSA / UEMA', pageWidth / 2, cursorY + 23, { align: 'center' });
+
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    desenharRodape(i);
+  }
+
+  doc.save(`uema_relatorio_desempenho_unidade_${dados.unidadeNumero}_${Date.now()}.pdf`);
+}

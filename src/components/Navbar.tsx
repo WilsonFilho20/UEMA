@@ -12,7 +12,8 @@ import {
   TrendingUp,
   LogIn,
   BrainCircuit,
-  Briefcase
+  Briefcase,
+  MessageSquare
 } from 'lucide-react';
 import { UsuarioAutenticado } from '../types';
 import { GOOGLE_DRIVE_REPO } from '../data/questionsData';
@@ -39,6 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       return [
         { id: 'aulas', rotulo: '12 Aulas Cronológicas', icone: BookOpen },
         { id: 'casos', rotulo: 'Estudos de Caso (25)', icone: Briefcase },
+        { id: 'forum', rotulo: 'Fórum de Dúvidas', icone: MessageSquare },
         { id: 'calendario', rotulo: 'Calendário de Aulas', icone: Calendar },
         { id: 'simuladores', rotulo: 'Simuladores Interativos', icone: Cpu },
         { id: 'simulado', rotulo: 'Banco de 2.000 Questões', icone: Sliders }
@@ -49,6 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       return [
         { id: 'aulas', rotulo: '12 Aulas Cronológicas', icone: BookOpen },
         { id: 'casos', rotulo: 'Estudos de Caso (25)', icone: Briefcase },
+        { id: 'forum', rotulo: 'Fórum de Dúvidas', icone: MessageSquare },
         { id: 'calendario', rotulo: 'Calendário Acadêmico', icone: Calendar },
         { id: 'simuladores', rotulo: 'Simuladores Interativos', icone: Cpu },
         { id: 'simulado', rotulo: 'Banco de 2.000 Questões', icone: Sliders },
@@ -62,6 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     return [
       { id: 'aulas', rotulo: '12 Aulas Cronológicas', icone: BookOpen },
       { id: 'casos', rotulo: 'Estudos de Caso (25)', icone: Briefcase },
+      { id: 'forum', rotulo: 'Fórum de Dúvidas', icone: MessageSquare },
       { id: 'calendario', rotulo: 'Calendário de Aulas', icone: Calendar },
       { id: 'simuladores', rotulo: 'Simuladores Interativos', icone: Cpu },
       { id: 'simulado', rotulo: 'Fazer Simulado', icone: Sliders },

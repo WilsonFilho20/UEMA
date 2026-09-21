@@ -51,6 +51,28 @@
         "questoesIds": { "type": "string" }
       },
       "required": ["id", "titulo", "professorId", "criadaEm"]
+    },
+    "DuvidaForum": {
+      "title": "DuvidaForum",
+      "description": "Dúvida postada no fórum de aulas e estudos de caso",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "aulaId": { "type": "string" },
+        "aulaTitulo": { "type": "string" },
+        "titulo": { "type": "string" },
+        "descricao": { "type": "string" },
+        "autorId": { "type": "string" },
+        "autorNome": { "type": "string" },
+        "autorPapel": { "type": "string", "enum": ["aluno", "professor"] },
+        "autorMatricula": { "type": "string" },
+        "criadoEm": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "votos": { "type": "number" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["aberto", "respondido_professor", "resolvido"] }
+      },
+      "required": ["id", "aulaId", "titulo", "descricao", "autorId", "autorNome", "criadoEm"]
     }
   },
   "firestore": {
@@ -65,6 +87,10 @@
     "/provas_geradas/{provaId}": {
       "schema": { "$ref": "#/entities/ProvaDocente" },
       "description": "Provas e listas de exercícios elaboradas pelo docente"
+    },
+    "/forum_duvidas/{duvidaId}": {
+      "schema": { "$ref": "#/entities/DuvidaForum" },
+      "description": "Tópicos de dúvidas por aula e estudos de caso"
     }
   }
 }

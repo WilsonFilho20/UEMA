@@ -22,17 +22,20 @@ import {
   Scale,
   Sliders,
   Eye,
-  ArrowRight
+  ArrowRight,
+  MessageSquare
 } from 'lucide-react';
 
 interface CaseStudiesHubProps {
   initialUnidade?: number | 'Todas';
   onNavigateToSimulator?: (simulatorId: string) => void;
+  onNavigateToForum?: (aulaId?: string) => void;
 }
 
 export const CaseStudiesHub: React.FC<CaseStudiesHubProps> = ({
   initialUnidade = 'Todas',
-  onNavigateToSimulator
+  onNavigateToSimulator,
+  onNavigateToForum
 }) => {
   const [unidadeFiltro, setUnidadeFiltro] = useState<number | 'Todas'>(initialUnidade);
   const [buscaTexto, setBuscaTexto] = useState<string>('');
@@ -343,6 +346,16 @@ export const CaseStudiesHub: React.FC<CaseStudiesHubProps> = ({
               </div>
 
               <div className="flex items-center gap-2 text-xs text-slate-500">
+                {onNavigateToForum && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigateToForum(`caso-u${casoAtivo.unidadeNumero}`)}
+                    className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-[#002752] border border-amber-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-[#002752]" />
+                    Debater no Fórum
+                  </button>
+                )}
                 <span>Simulador:</span>
                 <span className="font-mono font-bold text-[#002752] bg-white px-2 py-0.5 rounded border border-slate-300">
                   {casoAtivo.simuladorRecomendadoId}
